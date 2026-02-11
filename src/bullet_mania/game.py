@@ -1,6 +1,6 @@
 import pygame
 
-from bullet_mania.config.game import *
+from bullet_mania.config.gameConfig import *
 
 running = False
 

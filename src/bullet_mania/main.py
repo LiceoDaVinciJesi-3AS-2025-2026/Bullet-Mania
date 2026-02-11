@@ -1,15 +1,10 @@
 import pygame
 import sys
 
-# Impostazioni iniziali
-WIDTH, HEIGHT = 800, 600
-FPS = 60
-PLAYER_SIZE = 50
-PLAYER_COLOR = (0, 255, 0)
-BG_COLOR = (30, 30, 30)
-PLAYER_SPEED = 5
+from bullet_mania.config.game import *
 
 def main():
+
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bullet Mania")

@@ -87,9 +87,6 @@ def input():
 
 def update(delta_time: float):
     
-    player.POSITION[0] = round(player.POSITION[0] + (player.VELOCITY[0] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
-    player.POSITION[1] = round(player.POSITION[1] + (player.VELOCITY[1] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
-    
     if player.DASH_COOLDOWN_TIMER > 0:
         player.DASH_COOLDOWN_TIMER = max(0, player.DASH_COOLDOWN_TIMER - delta_time)
 
@@ -104,6 +101,9 @@ def update(delta_time: float):
     else:
         speed_multiplier = 1
 
+    player.POSITION[0] = round(player.POSITION[0] + (player.VELOCITY[0] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
+    player.POSITION[1] = round(player.POSITION[1] + (player.VELOCITY[1] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
+    
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
         player.IS_RELOADING = False
         player.LAST_RELOAD_TIME = 0

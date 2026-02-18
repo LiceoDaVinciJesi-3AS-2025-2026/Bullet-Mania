@@ -78,9 +78,31 @@ def input():
         if keys[pygame.K_r]:
             reload()
 
+        # dash
+        if keys[pygame.K_LSHIFT]:
+            if not player.IS_DASHING and player.DASH_COOLDOWN_TIMER <= 0 and (player.VELOCITY[0] != 0 or player.VELOCITY[1] != 0):
+                player.IS_DASHING = True
+                player.DASH_TIME = 0
+                player.DASH_COOLDOWN_TIMER = player.DASH_COOLDOWN
+
 def update(delta_time: float):
-    player.POSITION[0] = round(player.POSITION[0] + (player.VELOCITY[0] * CHARACTER_SPEED * delta_time), 4)
-    player.POSITION[1] = round(player.POSITION[1] + (player.VELOCITY[1] * CHARACTER_SPEED * delta_time), 4)
+    
+    player.POSITION[0] = round(player.POSITION[0] + (player.VELOCITY[0] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
+    player.POSITION[1] = round(player.POSITION[1] + (player.VELOCITY[1] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
+    
+    if player.DASH_COOLDOWN_TIMER > 0:
+        player.DASH_COOLDOWN_TIMER = max(0, player.DASH_COOLDOWN_TIMER - delta_time)
+
+    if player.IS_DASHING:
+        player.DASH_TIME += delta_time
+        if player.DASH_TIME >= player.DASH_DURATION:
+            player.IS_DASHING = False
+            player.DASH_TIME = 0
+
+    if player.IS_DASHING:
+        speed_multiplier = player.DASH_MULTIPLIER
+    else:
+        speed_multiplier = 1
 
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
         player.IS_RELOADING = False

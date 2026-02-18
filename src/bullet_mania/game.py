@@ -86,7 +86,6 @@ def input():
                 player.DASH_COOLDOWN_TIMER = player.DASH_COOLDOWN
 
 def update(delta_time: float):
-    
     if player.DASH_COOLDOWN_TIMER > 0:
         player.DASH_COOLDOWN_TIMER = max(0, player.DASH_COOLDOWN_TIMER - delta_time)
 

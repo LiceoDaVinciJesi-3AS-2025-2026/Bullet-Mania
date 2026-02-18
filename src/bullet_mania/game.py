@@ -1,7 +1,9 @@
 import pygame
+pygame.init()
 
 from bullet_mania.config.gameConfig import *
 
+from bullet_mania.ui import render_ui
 from bullet_mania.gunSystem import shoot, reload
 
 import bullet_mania.data.player as player
@@ -18,8 +20,6 @@ running = False
 
 def run():
     global running
-
-    pygame.init()
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bullet Mania - FPS: 0.00")
@@ -115,3 +115,5 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         pygame.draw.circle(render_surface, BULLET_COLOR, (position[0], position[1]), 2)
 
     screen.blit(pygame.transform.scale(render_surface, WINDOW_SIZE), (0, 0))
+
+    render_ui(screen)

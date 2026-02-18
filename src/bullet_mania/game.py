@@ -2,7 +2,7 @@ import pygame
 
 from bullet_mania.config.gameConfig import *
 
-from bullet_mania.gunSystem import shoot
+from bullet_mania.gunSystem import shoot, reload
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -74,9 +74,22 @@ def input():
         if keys[pygame.K_s]:
             player.VELOCITY[1] = 1
 
+        # reloading
+        if keys[pygame.K_r]:
+            reload()
+
 def update(delta_time: float):
     player.POSITION[0] = round(player.POSITION[0] + (player.VELOCITY[0] * CHARACTER_SPEED * delta_time), 4)
     player.POSITION[1] = round(player.POSITION[1] + (player.VELOCITY[1] * CHARACTER_SPEED * delta_time), 4)
+
+    if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
+        player.IS_RELOADING = False
+        player.LAST_RELOAD_TIME = 0
+        player.AMMO = 10
+        print("reloaded")
+
+    if player.IS_RELOADING:
+        player.LAST_RELOAD_TIME += delta_time
 
     for bullet in world.BULLETS:
         if bullet[3] <= 0:

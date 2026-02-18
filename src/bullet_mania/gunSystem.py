@@ -10,7 +10,7 @@ scale = pygame.Vector2(
 )
 
 def shoot(position, mouse_position, owner_id="local", velocity=0.5, lifetime=2000):
-    if player.AMMO > 0:
+    if player.AMMO > 0 and player.IS_RELOADING == False:
         player.AMMO -= 1
 
         player_pos = pygame.Vector2(position)
@@ -22,5 +22,7 @@ def shoot(position, mouse_position, owner_id="local", velocity=0.5, lifetime=200
             direction = direction.normalize()
 
         world.BULLETS.append([ [player_pos[0], player_pos[1]], direction, velocity, lifetime, owner_id ])
-    else:
-        print("No ammo left!")
+
+def reload():
+    if not player.IS_RELOADING:
+        player.IS_RELOADING = True

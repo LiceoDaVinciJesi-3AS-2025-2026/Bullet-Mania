@@ -66,20 +66,24 @@ def input():
 
         keys = pygame.key.get_pressed()
 
-        # reset player speed
-        player.VELOCITY = [0, 0]
+        if player.IS_DASHING:
+            player.VELOCITY[0] = player.DASH_DIRECTION[0]
+            player.VELOCITY[1] = player.DASH_DIRECTION[1]
+        else:
+            # reset player speed
+            player.VELOCITY = [0, 0]
 
-        # movement on X axis (left/right)
-        if keys[pygame.K_a]:
-            player.VELOCITY[0] = -1
-        if keys[pygame.K_d]:
-            player.VELOCITY[0] = 1
+            # movement on X axis (left/right)
+            if keys[pygame.K_a]:
+                player.VELOCITY[0] = -1
+            if keys[pygame.K_d]:
+                player.VELOCITY[0] = 1
 
-        # movement on Y axis (up/down)
-        if keys[pygame.K_w]:
-            player.VELOCITY[1] = -1
-        if keys[pygame.K_s]:
-            player.VELOCITY[1] = 1
+            # movement on Y axis (up/down)
+            if keys[pygame.K_w]:
+                player.VELOCITY[1] = -1
+            if keys[pygame.K_s]:
+                player.VELOCITY[1] = 1
 
         # reloading
         if keys[pygame.K_r]:
@@ -88,6 +92,9 @@ def input():
         # dash
         if keys[pygame.K_LSHIFT]:
             if not player.IS_DASHING and player.DASH_COOLDOWN_TIMER <= 0 and (player.VELOCITY[0] != 0 or player.VELOCITY[1] != 0):
+                # preserve the direction
+                player.DASH_DIRECTION[0] = player.VELOCITY[0]
+                player.DASH_DIRECTION[1] = player.VELOCITY[1]
                 player.IS_DASHING = True
                 player.DASH_TIME = 0
                 player.DASH_COOLDOWN_TIMER = player.DASH_COOLDOWN

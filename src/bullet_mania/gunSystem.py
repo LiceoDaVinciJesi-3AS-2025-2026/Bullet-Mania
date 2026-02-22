@@ -28,5 +28,5 @@ def shoot(position, mouse_position, owner_id="local", velocity=0.5, lifetime=200
         world.BULLETS.append([ [player_pos[0], player_pos[1]], direction, velocity, lifetime, owner_id ])
 
 def reload():
-    if not player.IS_RELOADING:
+    if not player.IS_RELOADING and player.AMMO < 10:
         player.IS_RELOADING = True

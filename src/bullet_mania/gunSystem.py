@@ -3,6 +3,7 @@ import pygame
 from bullet_mania.config.gameConfig import RENDER_SIZE, WINDOW_SIZE
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
+import bullet_mania.data.vfx as vfx
 
 scale = pygame.Vector2(
     RENDER_SIZE[0] / WINDOW_SIZE[0],
@@ -20,6 +21,9 @@ def shoot(position, mouse_position, owner_id="local", velocity=0.5, lifetime=200
 
         if direction.length() != 0:
             direction = direction.normalize()
+        
+        vfx.HAS_SHOT = True
+        vfx.SHOT_TIME = 0.0
 
         world.BULLETS.append([ [player_pos[0], player_pos[1]], direction, velocity, lifetime, owner_id ])
 

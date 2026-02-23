@@ -6,12 +6,14 @@ pygame.init()
 from bullet_mania.config.gameConfig import *
 
 from bullet_mania.ui import render_ui
-from bullet_mania.gunSystem import shoot, reload
+from bullet_mania.gunSystem import shoot, reload, draw_bullet
 from bullet_mania.tilesManager import load_tiles, load_tiles_assets
+from bullet_mania.assetsManager import load_asset
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
 import bullet_mania.data.vfx as vfx
+import bullet_mania.data.assets as assets
 
 WIDTH, HEIGHT = WINDOW_SIZE
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
@@ -19,14 +21,13 @@ RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 
 player.POSITION = [(RENDER_WIDTH / 2 - PLAYER_WIDTH / 2), (RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2)]
-CAM_SHAKE_OFFSET = [0.0, 0.0]
 
 FIRST_LAYER_ENABLED = False
 
 running = False
 
 def run():
-    global running, FIRST_LAYER_ENABLED
+    global running, FIRST_LAYER_ENABLED, BULLET_IMAGE
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bullet Mania - FPS: 0.00")
@@ -47,6 +48,8 @@ def run():
 
     if len(world.TILES) > 1:
         FIRST_LAYER_ENABLED = True
+    
+    load_asset("bullet", "src/bullet_mania/assets/bullet.png", (4, 4))
 
     while running:
         delta_time = clock.get_time()
@@ -61,6 +64,11 @@ def run():
         clock.tick(FPS)
         pygame.display.set_caption(f"Bullet Mania - FPS: {clock.get_fps():.2f}")
 
+scale = pygame.Vector2(
+    RENDER_SIZE[0] / WINDOW_SIZE[0],
+    RENDER_SIZE[1] / WINDOW_SIZE[1]
+)
+
 def input():
     global running
 
@@ -74,7 +82,22 @@ def input():
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1: # left click
-                shoot((RENDER_WIDTH/2, RENDER_HEIGHT/2), pygame.mouse.get_pos())
+                mouse_screen = pygame.mouse.get_pos()
+
+                camera_x = player.POSITION[0] - RENDER_WIDTH / 2
+                camera_y = player.POSITION[1] - RENDER_HEIGHT / 2
+
+                mouse_render = (
+                    mouse_screen[0] / scale[0],
+                    mouse_screen[1] / scale[1]
+                )
+
+                mouse_world = (
+                    mouse_render[0] + camera_x,
+                    mouse_render[1] + camera_y
+                )
+
+                shoot(player.POSITION, mouse_world)
 
         keys = pygame.key.get_pressed()
 
@@ -112,7 +135,7 @@ def input():
                 player.DASH_COOLDOWN_TIMER = player.DASH_COOLDOWN
 
 def update(delta_time: float):
-    global CAM_SHAKE_OFFSET, FIRST_LAYER_ENABLED
+    global FIRST_LAYER_ENABLED
 
     # update player position with dashing
     if player.DASH_COOLDOWN_TIMER > 0:
@@ -169,7 +192,19 @@ def update(delta_time: float):
 
     # update bullets
     for bullet in world.BULLETS:
-        if bullet[3] <= 0:
+        should_destroy = False
+
+        if FIRST_LAYER_ENABLED:
+            for tile in world.TILES[1]:
+                tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
+                bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
+
+                if tile_rect.colliderect(bullet_rect):
+                    print("Bullet collision detected")
+                    should_destroy = True
+                    break
+
+        if bullet[3] <= 0 or should_destroy:
             world.BULLETS.remove(bullet)
             continue
 
@@ -192,16 +227,16 @@ def update(delta_time: float):
         progress = vfx.CAM_SHAKE_TIME / vfx.CAM_SHAKE_DURATION
         decay = progress
 
-        CAM_SHAKE_OFFSET[0] = math.sin(pygame.time.get_ticks() * 0.5) * vfx.CAM_SHAKE_STRENGTH * decay
-        CAM_SHAKE_OFFSET[1] = math.cos(pygame.time.get_ticks() * 0.7) * vfx.CAM_SHAKE_STRENGTH * decay
+        vfx.CAM_SHAKE_OFFSET[0] = math.sin(pygame.time.get_ticks() * 0.5) * vfx.CAM_SHAKE_STRENGTH * decay
+        vfx.CAM_SHAKE_OFFSET[1] = math.cos(pygame.time.get_ticks() * 0.7) * vfx.CAM_SHAKE_STRENGTH * decay
 
-        print(CAM_SHAKE_OFFSET)
+        print(vfx.CAM_SHAKE_OFFSET)
         print(vfx.CAM_SHAKE_TIME)
     else:
-        CAM_SHAKE_OFFSET = [0.0, 0.0]
+        vfx.CAM_SHAKE_OFFSET = [0.0, 0.0]
 
 def render(render_surface: pygame.Surface, screen: pygame.Surface):
-    global FIRST_LAYER_ENABLED
+    global FIRST_LAYER_ENABLED, BULLET_IMAGE
 
     render_surface.fill(BG_COLOR)
 
@@ -211,8 +246,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         tile_image = tile[4]
 
         tile_rendering_pos = (
-            tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
-            tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
+            tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+            tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
         )
 
         render_surface.blit(tile_image, tile_rendering_pos)
@@ -233,8 +268,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
             tile_image = tile[4]
 
             tile_rendering_pos = (
-                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
-                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
+                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
             )
 
             render_surface.blit(tile_image, tile_rendering_pos)
@@ -243,8 +278,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         render_surface,
         CHARACTER_COLOR,
         (
-            RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
-            RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1],
+            RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+            RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1],
             PLAYER_WIDTH,
             PLAYER_HEIGHT
         )
@@ -256,16 +291,24 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
             tile_image = tile[4]
 
             tile_rendering_pos = (
-                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
-                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
+                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
             )
 
             render_surface.blit(tile_image, tile_rendering_pos)
 
+    camera_x = player.POSITION[0] - RENDER_WIDTH / 2
+    camera_y = player.POSITION[1] - RENDER_HEIGHT / 2
+
     for bullet in world.BULLETS:
         position = bullet[0]
 
-        pygame.draw.circle(render_surface, BULLET_COLOR, (position[0] + CAM_SHAKE_OFFSET[0], position[1] + CAM_SHAKE_OFFSET[1]), 2)
+        bullet_rendering_position = (
+            position[0] - camera_x + vfx.CAM_SHAKE_OFFSET[0],
+            position[1] - camera_y + vfx.CAM_SHAKE_OFFSET[1]
+        )
+
+        draw_bullet(render_surface, bullet_rendering_position, "bullet")
 
     screen.blit(pygame.transform.scale(render_surface, WINDOW_SIZE), (0, 0))
 

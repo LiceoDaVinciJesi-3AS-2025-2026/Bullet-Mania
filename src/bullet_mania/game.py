@@ -1,14 +1,18 @@
 import math
+import random
 
 import pygame
+
 pygame.init()
+pygame.mixer.init()
 
 from bullet_mania.config.gameConfig import *
 
-from bullet_mania.ui import render_ui
-from bullet_mania.gunSystem import shoot, reload, draw_bullet
-from bullet_mania.tilesManager import load_tiles, load_tiles_assets
 from bullet_mania.assetsManager import load_asset
+
+from bullet_mania.ui import render_ui
+from bullet_mania.gunSystem import draw_bullet_hole, shoot, start_reload, reload, draw_bullet, place_bullet_hole
+from bullet_mania.tilesManager import load_tiles, load_tiles_assets
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -20,7 +24,7 @@ RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 
 PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 
-player.POSITION = [(RENDER_WIDTH / 2 - PLAYER_WIDTH / 2), (RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2)]
+player.POSITION = [0.0, 0.0]
 
 FIRST_LAYER_ENABLED = False
 
@@ -32,15 +36,29 @@ def run():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bullet Mania - FPS: 0.00")
 
-    render_surface = pygame.Surface(RENDER_SIZE)
+    pygame.mixer.set_num_channels(32)
+
+    pygame.mixer.music.load("src/bullet_mania/assets/sounds/music/adrenaline-rush.mp3")
+    pygame.mixer.music.set_volume(0.25)
+    pygame.mixer.music.play(loops=-1)
+
+    render_surface = pygame.Surface(RENDER_SIZE).convert_alpha()
 
     clock = pygame.time.Clock()
 
     running = True
 
     tiles_data_test = [
-        [],
-        [[0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"]]
+        [
+            [0, 16, 16, 16, "floor"], [16, 16, 16, 16, "floor"], [32, 16, 16, 16, "floor"], [48, 16, 16, 16, "floor"], [64, 16, 16, 16, "floor"],
+            [0, 32, 16, 16, "floor"], [16, 32, 16, 16, "floor"], [32, 32, 16, 16, "floor"], [48, 32, 16, 16, "floor"], [64, 32, 16, 16, "floor"],
+            [0, 48, 16, 16, "floor"], [16, 48, 16, 16, "floor"], [32, 48, 16, 16, "floor"], [48, 48, 16, 16, "floor"], [64, 48, 16, 16, "floor"]
+        ],
+        [
+            [-16, 0, 16, 16, "wall"], [0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"], [64, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
+            [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"],
+            [-16, 32, 16, 16, "wall"], [80, 32, 16, 16, "wall"]
+         ]
     ]
 
     load_tiles_assets()
@@ -48,25 +66,28 @@ def run():
 
     if len(world.TILES) > 1:
         FIRST_LAYER_ENABLED = True
-    
-    load_asset("bullet", "src/bullet_mania/assets/bullet.png", (4, 4))
+
+    load_asset("bullet", "src/bullet_mania/assets/bullet.png", (8, 8))
+    load_asset("cursor", "src/bullet_mania/assets/ui/cursor.png", (11, 11))
+    load_asset("heart", "src/bullet_mania/assets/ui/heart.png", (16, 16))
+    load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bulletHole.png", (12, 12))
 
     while running:
         delta_time = clock.get_time()
 
         input()
         update(delta_time)
-        clock.tick(FPS)
         render(render_surface, screen)
 
-        pygame.display.flip()
-
         clock.tick(FPS)
+
+        pygame.display.flip()
         pygame.display.set_caption(f"Bullet Mania - FPS: {clock.get_fps():.2f}")
+        pygame.mouse.set_visible(False)
 
 scale = pygame.Vector2(
-    RENDER_SIZE[0] / WINDOW_SIZE[0],
-    RENDER_SIZE[1] / WINDOW_SIZE[1]
+    WINDOW_SIZE[0] / RENDER_SIZE[0],
+    WINDOW_SIZE[1] / RENDER_SIZE[1]
 )
 
 def input():
@@ -122,7 +143,7 @@ def input():
 
         # reloading
         if keys[pygame.K_r]:
-            reload()
+            start_reload()
 
         # dash
         if keys[pygame.K_LSHIFT]:
@@ -152,8 +173,12 @@ def update(delta_time: float):
     else:
         speed_multiplier = 1
 
-    player.POSITION[0] = round(player.POSITION[0] + (player.VELOCITY[0] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
-    player.POSITION[1] = round(player.POSITION[1] + (player.VELOCITY[1] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
+    velocity = pygame.Vector2(player.VELOCITY)
+    if velocity.length() > 0:
+        velocity = velocity.normalize()
+
+    player.POSITION[0] = player.POSITION[0] + (velocity[0] * CHARACTER_SPEED * speed_multiplier * delta_time)
+    player.POSITION[1] = player.POSITION[1] + (velocity[1] * CHARACTER_SPEED * speed_multiplier * delta_time)
 
     # collision with tiles
     if FIRST_LAYER_ENABLED:
@@ -182,10 +207,7 @@ def update(delta_time: float):
     
     # update reloading logic
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
-        player.IS_RELOADING = False
-        player.LAST_RELOAD_TIME = 0
-        player.AMMO = 10
-        print("reloaded")
+        reload()
 
     if player.IS_RELOADING:
         player.LAST_RELOAD_TIME += delta_time
@@ -200,7 +222,8 @@ def update(delta_time: float):
                 bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
 
                 if tile_rect.colliderect(bullet_rect):
-                    print("Bullet collision detected")
+                    place_bullet_hole((tile[0] + random.randint(4, 12), tile[1] + random.randint(4, 12)))
+
                     should_destroy = True
                     break
 
@@ -216,6 +239,11 @@ def update(delta_time: float):
 
         bullet[3] -= delta_time
     
+    for bullet_hole in vfx.BULLET_HOLES:
+        bullet_hole[1] += delta_time
+        if bullet_hole[1] >= vfx.BULLET_HOLE_DURATION:
+            vfx.BULLET_HOLES.remove(bullet_hole)
+    
     # update vfx
     if vfx.HAS_SHOT:
         vfx.CAM_SHAKE_TIME = vfx.CAM_SHAKE_DURATION
@@ -229,9 +257,6 @@ def update(delta_time: float):
 
         vfx.CAM_SHAKE_OFFSET[0] = math.sin(pygame.time.get_ticks() * 0.5) * vfx.CAM_SHAKE_STRENGTH * decay
         vfx.CAM_SHAKE_OFFSET[1] = math.cos(pygame.time.get_ticks() * 0.7) * vfx.CAM_SHAKE_STRENGTH * decay
-
-        print(vfx.CAM_SHAKE_OFFSET)
-        print(vfx.CAM_SHAKE_TIME)
     else:
         vfx.CAM_SHAKE_OFFSET = [0.0, 0.0]
 
@@ -310,6 +335,20 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
         draw_bullet(render_surface, bullet_rendering_position, "bullet")
 
+    
+    for bullet_hole in vfx.BULLET_HOLES:
+        bullet_hole_rendering_position = (
+            bullet_hole[0][0] - camera_x + vfx.CAM_SHAKE_OFFSET[0],
+            bullet_hole[0][1] - camera_y + vfx.CAM_SHAKE_OFFSET[1]
+        )
+
+        draw_bullet_hole(render_surface, bullet_hole_rendering_position, bullet_hole[1])
+
+    # Draw cursor
+
     screen.blit(pygame.transform.scale(render_surface, WINDOW_SIZE), (0, 0))
 
     render_ui(screen)
+
+    mouse_pos = pygame.mouse.get_pos()
+    screen.blit(pygame.transform.scale_by(assets.ASSETS["cursor"], scale), (mouse_pos[0] - 7, mouse_pos[1] - 7))

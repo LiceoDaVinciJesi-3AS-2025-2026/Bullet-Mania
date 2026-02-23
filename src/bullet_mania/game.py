@@ -7,6 +7,7 @@ from bullet_mania.config.gameConfig import *
 
 from bullet_mania.ui import render_ui
 from bullet_mania.gunSystem import shoot, reload
+from bullet_mania.tilesManager import load_tiles
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -20,12 +21,12 @@ PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 player.POSITION = [(RENDER_WIDTH / 2 - PLAYER_WIDTH / 2), (RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2)]
 CAM_SHAKE_OFFSET = [0.0, 0.0]
 
+FIRST_LAYER_ENABLED = False
+
 running = False
 
-RECTS = [[60, 60]]
-
 def run():
-    global running
+    global running, FIRST_LAYER_ENABLED
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bullet Mania - FPS: 0.00")
@@ -35,6 +36,15 @@ def run():
     clock = pygame.time.Clock()
 
     running = True
+
+    tiles_data_test = [
+        [[0, 0, 16, 16, (0, 255, 0)], [16, 0, 16, 16, (0, 0, 255)], [32, 0, 16, 16, (0, 255, 0)], [48, 0, 16, 16, (0, 0, 255)]]
+    ]
+
+    load_tiles(tiles_data_test, world.TILES)
+
+    if len(world.TILES) > 1:
+        FIRST_LAYER_ENABLED = True
 
     while running:
         delta_time = clock.get_time()
@@ -100,8 +110,9 @@ def input():
                 player.DASH_COOLDOWN_TIMER = player.DASH_COOLDOWN
 
 def update(delta_time: float):
-    global CAM_SHAKE_OFFSET
+    global CAM_SHAKE_OFFSET, FIRST_LAYER_ENABLED
 
+    # update player position with dashing
     if player.DASH_COOLDOWN_TIMER > 0:
         player.DASH_COOLDOWN_TIMER = max(0, player.DASH_COOLDOWN_TIMER - delta_time)
 
@@ -118,7 +129,33 @@ def update(delta_time: float):
 
     player.POSITION[0] = round(player.POSITION[0] + (player.VELOCITY[0] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
     player.POSITION[1] = round(player.POSITION[1] + (player.VELOCITY[1] * CHARACTER_SPEED * speed_multiplier * delta_time), 4)
+
+    # collision with tiles
+    if FIRST_LAYER_ENABLED:
+        for tile in world.TILES[1]:
+            tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
+            player_rect = pygame.Rect(
+                player.POSITION[0] - 10,
+                player.POSITION[1] - 10,
+                20,
+                20
+            )
+
+            if tile_rect.colliderect(player_rect):
+                intersection = tile_rect.clip(player_rect)
+
+                if intersection.width < intersection.height:
+                    if player.POSITION[0] < tile_rect.x:
+                        player.POSITION[0] -= intersection.width
+                    else:
+                        player.POSITION[0] += intersection.width
+                else:
+                    if player.POSITION[1] < tile_rect.y:
+                        player.POSITION[1] -= intersection.height
+                    else:
+                        player.POSITION[1] += intersection.height
     
+    # update reloading logic
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
         player.IS_RELOADING = False
         player.LAST_RELOAD_TIME = 0
@@ -128,6 +165,7 @@ def update(delta_time: float):
     if player.IS_RELOADING:
         player.LAST_RELOAD_TIME += delta_time
 
+    # update bullets
     for bullet in world.BULLETS:
         if bullet[3] <= 0:
             world.BULLETS.remove(bullet)
@@ -141,6 +179,7 @@ def update(delta_time: float):
 
         bullet[3] -= delta_time
     
+    # update vfx
     if vfx.HAS_SHOT:
         vfx.CAM_SHAKE_TIME = vfx.CAM_SHAKE_DURATION
         vfx.HAS_SHOT = False
@@ -160,15 +199,64 @@ def update(delta_time: float):
         CAM_SHAKE_OFFSET = [0.0, 0.0]
 
 def render(render_surface: pygame.Surface, screen: pygame.Surface):
+    global FIRST_LAYER_ENABLED
+
     render_surface.fill(BG_COLOR)
 
-    pygame.draw.rect(render_surface, CHARACTER_COLOR, (RENDER_WIDTH/2 - PLAYER_WIDTH/2 + CAM_SHAKE_OFFSET[0], RENDER_HEIGHT/2 - PLAYER_HEIGHT/2 + CAM_SHAKE_OFFSET[1], PLAYER_WIDTH, PLAYER_HEIGHT))
+    for tile in world.TILES[0]:
+        tile_pos = tile[0], tile[1]
+        tile_size = tile[2], tile[3]
+        tile_color = tile[4]
 
-    for rect in RECTS:
-        rect_pos = rect[0], rect[1]
-        rect_rendering_pos = rect_pos[0] - player.POSITION[0] + CAM_SHAKE_OFFSET[0], rect_pos[1] - player.POSITION[1] + CAM_SHAKE_OFFSET[1]
+        tile_rendering_pos = (
+            tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
+            tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
+        )
 
-        pygame.draw.rect(render_surface, (255, 0, 0), (rect_rendering_pos[0], rect_rendering_pos[1], 20, 20))
+        pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
+    
+    tiles_over_player: list[list] = []
+
+    if FIRST_LAYER_ENABLED:
+        for tile in world.TILES[1]:
+            tile_pos = tile[0], tile[1]
+
+            if tile_pos[1] < player.POSITION[1] + PLAYER_HEIGHT:
+                tiles_over_player.append(tile)
+                continue
+
+            tile_size = tile[2], tile[3]
+            tile_color = tile[4]
+
+            tile_rendering_pos = (
+                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
+                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
+            )
+
+            pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
+
+    pygame.draw.rect(
+        render_surface,
+        CHARACTER_COLOR,
+        (
+            RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
+            RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1],
+            PLAYER_WIDTH,
+            PLAYER_HEIGHT
+        )
+    )
+
+    for tile in tiles_over_player:
+            tile_pos = tile[0], tile[1]
+            tile_size = tile[2], tile[3]
+            tile_color = tile[4]
+
+            tile_rendering_pos = (
+                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
+                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
+            )
+
+            pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
 
     for bullet in world.BULLETS:
         position = bullet[0]

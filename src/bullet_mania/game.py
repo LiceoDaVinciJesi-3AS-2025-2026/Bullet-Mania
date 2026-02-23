@@ -7,7 +7,7 @@ from bullet_mania.config.gameConfig import *
 
 from bullet_mania.ui import render_ui
 from bullet_mania.gunSystem import shoot, reload
-from bullet_mania.tilesManager import load_tiles
+from bullet_mania.tilesManager import load_tiles, load_tiles_assets
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -38,9 +38,11 @@ def run():
     running = True
 
     tiles_data_test = [
-        [[0, 0, 16, 16, (0, 255, 0)], [16, 0, 16, 16, (0, 0, 255)], [32, 0, 16, 16, (0, 255, 0)], [48, 0, 16, 16, (0, 0, 255)]]
+        [],
+        [[0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"]]
     ]
 
+    load_tiles_assets()
     load_tiles(tiles_data_test, world.TILES)
 
     if len(world.TILES) > 1:
@@ -205,15 +207,17 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     for tile in world.TILES[0]:
         tile_pos = tile[0], tile[1]
-        tile_size = tile[2], tile[3]
-        tile_color = tile[4]
+        tile_size = (tile[2], tile[3])
+        tile_image = tile[4]
 
         tile_rendering_pos = (
             tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
             tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
         )
 
-        pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
+        render_surface.blit(tile_image, tile_rendering_pos)
+
+        # pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
     
     tiles_over_player: list[list] = []
 
@@ -221,19 +225,19 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         for tile in world.TILES[1]:
             tile_pos = tile[0], tile[1]
 
-            if tile_pos[1] < player.POSITION[1] + PLAYER_HEIGHT:
+            if tile_pos[1] < player.POSITION[1] + 20:
                 tiles_over_player.append(tile)
                 continue
 
-            tile_size = tile[2], tile[3]
-            tile_color = tile[4]
+            tile_size = (tile[2], tile[3])
+            tile_image = tile[4]
 
             tile_rendering_pos = (
                 tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
                 tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
             )
 
-            pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
+            render_surface.blit(tile_image, tile_rendering_pos)
 
     pygame.draw.rect(
         render_surface,
@@ -248,15 +252,15 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     for tile in tiles_over_player:
             tile_pos = tile[0], tile[1]
-            tile_size = tile[2], tile[3]
-            tile_color = tile[4]
+            tile_size = (tile[2], tile[3])
+            tile_image = tile[4]
 
             tile_rendering_pos = (
                 tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + CAM_SHAKE_OFFSET[0],
                 tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + CAM_SHAKE_OFFSET[1]
             )
 
-            pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
+            render_surface.blit(tile_image, tile_rendering_pos)
 
     for bullet in world.BULLETS:
         position = bullet[0]

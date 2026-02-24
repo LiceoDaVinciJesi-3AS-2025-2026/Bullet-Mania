@@ -23,6 +23,7 @@ WIDTH, HEIGHT = WINDOW_SIZE
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 
 PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
+PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT = CHARACTER_HITBOX_SIZE
 
 player.POSITION = [0.0, 0.0]
 
@@ -182,14 +183,15 @@ def update(delta_time: float):
 
     # collision with tiles
     if FIRST_LAYER_ENABLED:
+        player_rect = pygame.Rect(
+            player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+            player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+            PLAYER_HITBOX_WIDTH,
+            PLAYER_HITBOX_HEIGHT
+        )
+
         for tile in world.TILES[1]:
             tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
-            player_rect = pygame.Rect(
-                player.POSITION[0] - 10,
-                player.POSITION[1] - 10,
-                20,
-                20
-            )
 
             if tile_rect.colliderect(player_rect):
                 intersection = tile_rect.clip(player_rect)
@@ -265,14 +267,17 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     render_surface.fill(BG_COLOR)
 
+    camera_x = player.POSITION[0] + PLAYER_WIDTH / 2
+    camera_y = player.POSITION[1] + PLAYER_HEIGHT / 2
+
     for tile in world.TILES[0]:
         tile_pos = tile[0], tile[1]
         tile_size = (tile[2], tile[3])
         tile_image = tile[4]
 
         tile_rendering_pos = (
-            tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-            tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+            tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+            tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
         )
 
         render_surface.blit(tile_image, tile_rendering_pos)
@@ -285,7 +290,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         for tile in world.TILES[1]:
             tile_pos = tile[0], tile[1]
 
-            if tile_pos[1] < player.POSITION[1] + 20:
+            if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
                 tiles_over_player.append(tile)
                 continue
 
@@ -293,8 +298,17 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
             tile_image = tile[4]
 
             tile_rendering_pos = (
-                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+                tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+                tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+            )
+
+            pygame.draw.rect(
+                render_surface,
+                (0, 255, 255),
+                (
+                    tile[0], tile[1],
+                    16, 16
+                )
             )
 
             render_surface.blit(tile_image, tile_rendering_pos)
@@ -310,14 +324,45 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         )
     )
 
+    pygame.draw.rect(
+        render_surface,
+        (0, 0, 255),
+        (
+            player.POSITION[0],
+            player.POSITION[1],
+            PLAYER_WIDTH,
+            PLAYER_HEIGHT
+        )
+    )
+
+    pygame.draw.rect(
+        render_surface,
+        (255, 0, 0),
+        (
+            player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+            player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+            PLAYER_HITBOX_WIDTH,
+            PLAYER_HITBOX_HEIGHT
+        )
+    )
+
     for tile in tiles_over_player:
             tile_pos = tile[0], tile[1]
             tile_size = (tile[2], tile[3])
             tile_image = tile[4]
 
             tile_rendering_pos = (
-                tile_pos[0] - player.POSITION[0] + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-                tile_pos[1] - player.POSITION[1] + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+                tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+                tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+            )
+
+            pygame.draw.rect(
+                render_surface,
+                (0, 255, 255),
+                (
+                    tile[0], tile[1],
+                    16, 16
+                )
             )
 
             render_surface.blit(tile_image, tile_rendering_pos)

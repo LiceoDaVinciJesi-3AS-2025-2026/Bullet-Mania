@@ -29,7 +29,7 @@ def draw_mag(screen: pygame.Surface):
     global bullet_image
 
     if bullet_image is None:
-        bullet_image = pygame.transform.scale_by(assets.ASSETS["bullet"], scale*.4)
+        bullet_image = pygame.transform.scale_by(assets.ASSETS["ammo"], scale)
     
     for i in range(player.MAG_AMMO):
         screen.blit(bullet_image, (WINDOW_WIDTH - 45, WINDOW_HEIGHT - 35 - (i * 25)))

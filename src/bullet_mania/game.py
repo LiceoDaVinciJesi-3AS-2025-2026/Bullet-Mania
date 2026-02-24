@@ -71,6 +71,7 @@ def run():
     load_asset("cursor", "src/bullet_mania/assets/ui/cursor.png", (11, 11))
     load_asset("heart", "src/bullet_mania/assets/ui/heart.png", (16, 16))
     load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bulletHole.png", (12, 12))
+    load_asset("ammo", "src/bullet_mania/assets/ui/ammo.png", (6, 6))
 
     while running:
         delta_time = clock.get_time()

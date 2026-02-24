@@ -39,7 +39,7 @@ def run():
 
     pygame.mixer.set_num_channels(32)
 
-    pygame.mixer.music.load("src/bullet_mania/assets/sounds/music/adrenaline-rush.mp3")
+    pygame.mixer.music.load("src/bullet_mania/assets/sounds/music/adrenaline_rush.mp3")
     pygame.mixer.music.set_volume(0.25)
     pygame.mixer.music.play(loops=-1)
 
@@ -107,8 +107,10 @@ def input():
             if event.button == 1: # left click
                 mouse_screen = pygame.mouse.get_pos()
 
-                camera_x = player.POSITION[0] - RENDER_WIDTH / 2
-                camera_y = player.POSITION[1] - RENDER_HEIGHT / 2
+                camera_x = player.POSITION[0] - RENDER_WIDTH / 2 + PLAYER_WIDTH / 2
+                camera_y = player.POSITION[1] - RENDER_HEIGHT / 2 + PLAYER_HEIGHT / 2
+
+                player_center_screen = (player.POSITION[0] + PLAYER_WIDTH / 2, player.POSITION[1] + PLAYER_HEIGHT / 2)
 
                 mouse_render = (
                     mouse_screen[0] / scale[0],
@@ -120,7 +122,7 @@ def input():
                     mouse_render[1] + camera_y
                 )
 
-                shoot(player.POSITION, mouse_world)
+                shoot(player_center_screen, mouse_world)
 
         keys = pygame.key.get_pressed()
 
@@ -179,8 +181,8 @@ def update(delta_time: float):
     if velocity.length() > 0:
         velocity = velocity.normalize()
 
-    player.POSITION[0] = player.POSITION[0] + (velocity[0] * CHARACTER_SPEED * speed_multiplier * delta_time)
-    player.POSITION[1] = player.POSITION[1] + (velocity[1] * CHARACTER_SPEED * speed_multiplier * delta_time)
+    player.POSITION[0] += velocity[0] * CHARACTER_SPEED * speed_multiplier * delta_time
+    player.POSITION[1] += velocity[1] * CHARACTER_SPEED * speed_multiplier * delta_time
 
     # collision with tiles
     if FIRST_LAYER_ENABLED:
@@ -216,13 +218,14 @@ def update(delta_time: float):
         player.LAST_RELOAD_TIME += delta_time
 
     # update bullets
-    for bullet in world.BULLETS:
+    for bullet in world.BULLETS[:]:
         should_destroy = False
 
         if FIRST_LAYER_ENABLED:
+            bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
+
             for tile in world.TILES[1]:
                 tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
-                bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
 
                 if tile_rect.colliderect(bullet_rect):
                     place_bullet_hole((tile[0] + random.randint(4, 12), tile[1] + random.randint(4, 12)))
@@ -303,14 +306,14 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
                 tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
             )
 
-            pygame.draw.rect(
-                render_surface,
-                (0, 255, 255),
-                (
-                    tile[0], tile[1],
-                    16, 16
-                )
-            )
+            # pygame.draw.rect(
+            #     render_surface,
+            #     (0, 255, 255),
+            #     (
+            #         tile[0], tile[1],
+            #         16, 16
+            #     )
+            # )
 
             render_surface.blit(tile_image, tile_rendering_pos)
 
@@ -325,27 +328,27 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         )
     )
 
-    pygame.draw.rect(
-        render_surface,
-        (0, 0, 255),
-        (
-            player.POSITION[0],
-            player.POSITION[1],
-            PLAYER_WIDTH,
-            PLAYER_HEIGHT
-        )
-    )
+    # pygame.draw.rect(
+    #     render_surface,
+    #     (0, 0, 255),
+    #     (
+    #         player.POSITION[0],
+    #         player.POSITION[1],
+    #         PLAYER_WIDTH,
+    #         PLAYER_HEIGHT
+    #     )
+    # )
 
-    pygame.draw.rect(
-        render_surface,
-        (255, 0, 0),
-        (
-            player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
-            player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
-            PLAYER_HITBOX_WIDTH,
-            PLAYER_HITBOX_HEIGHT
-        )
-    )
+    # pygame.draw.rect(
+    #     render_surface,
+    #     (255, 0, 0),
+    #     (
+    #         player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+    #         player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+    #         PLAYER_HITBOX_WIDTH,
+    #         PLAYER_HITBOX_HEIGHT
+    #     )
+    # )
 
     for tile in tiles_over_player:
             tile_pos = tile[0], tile[1]
@@ -357,36 +360,43 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
                 tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
             )
 
-            pygame.draw.rect(
-                render_surface,
-                (0, 255, 255),
-                (
-                    tile[0], tile[1],
-                    16, 16
-                )
-            )
+            # pygame.draw.rect(
+            #     render_surface,
+            #     (0, 255, 255),
+            #     (
+            #         tile[0], tile[1],
+            #         16, 16
+            #     )
+            # )
 
             render_surface.blit(tile_image, tile_rendering_pos)
-
-    camera_x = player.POSITION[0] - RENDER_WIDTH / 2
-    camera_y = player.POSITION[1] - RENDER_HEIGHT / 2
 
     for bullet in world.BULLETS:
         position = bullet[0]
 
         bullet_rendering_position = (
-            position[0] - camera_x + vfx.CAM_SHAKE_OFFSET[0],
-            position[1] - camera_y + vfx.CAM_SHAKE_OFFSET[1]
+            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
         )
 
         draw_bullet(render_surface, bullet_rendering_position, "bullet")
 
-    
     for bullet_hole in vfx.BULLET_HOLES:
+        position = bullet_hole[0]
+
         bullet_hole_rendering_position = (
-            bullet_hole[0][0] - camera_x + vfx.CAM_SHAKE_OFFSET[0],
-            bullet_hole[0][1] - camera_y + vfx.CAM_SHAKE_OFFSET[1]
+            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
         )
+
+        # pygame.draw.rect(
+        #     render_surface,
+        #     (255, 255, 0),
+        #     (
+        #         bullet_hole[0][0], bullet_hole[0][1],
+        #         4, 4
+        #     )
+        # )
 
         draw_bullet_hole(render_surface, bullet_hole_rendering_position, bullet_hole[1])
 

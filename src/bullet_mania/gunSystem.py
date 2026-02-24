@@ -20,7 +20,7 @@ shell_falling_sound.set_volume(0.05)
 reload_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_reload.mp3")
 reload_sound.set_volume(0.15)
 
-def shoot(position, mouse_pos, owner_id="local", velocity=.5, lifetime=1500):
+def shoot(position, mouse_pos, owner_id="local", velocity=.3, lifetime=1500):
     if player.MAG_AMMO > 0 and player.IS_RELOADING == False:
         player.MAG_AMMO -= 1
 

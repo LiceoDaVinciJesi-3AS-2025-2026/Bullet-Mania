@@ -56,12 +56,12 @@ def run():
             [0, 48, 16, 16, "floor"], [16, 48, 16, 16, "floor"], [32, 48, 16, 16, "floor"], [48, 48, 16, 16, "floor"], [64, 48, 16, 16, "floor"]
         ],
         [
-            [-16, 0, 16, 16, "wall"], [0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"], [64, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
-            [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"],
-            [-16, 32, 16, 16, "wall"], [80, 32, 16, 16, "wall"]
+            [-16, 0, 16, 16, "dark_wall"], [0, 0, 16, 16, "dark_wall"], [16, 0, 16, 16, "dark_wall"], [32, 0, 16, 16, "dark_wall"], [48, 0, 16, 16, "dark_wall"], [64, 0, 16, 16, "dark_wall"], [80, 0, 16, 16, "dark_wall"],
+            [-16, 16, 16, 16, "dark_wall"], [80, 16, 16, 16, "dark_wall"],
+            [-16, 32, 16, 16, "dark_wall"], [80, 32, 16, 16, "dark_wall"]
         ],
         [
-            [-16, -16, 16, 16, "wall"], [0, -16, 16, 16, "wall"], [16, -16, 16, 16, "wall"], [32, -16, 16, 16, "wall"], [48, -16, 16, 16, "wall"], [64, -16, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
+            [-16, -16, 16, 16, "top_wall_sx"], [0, -16, 16, 16, "top_wall"], [16, -16, 16, 16, "top_wall"], [32, -16, 16, 16, "top_wall"], [48, -16, 16, 16, "top_wall"], [64, -16, 16, 16, "top_wall"], [80, 0, 16, 16, "top_wall_dx"],
             [-16, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
             [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"]
         ]
@@ -296,31 +296,32 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     tiles_over_player: list[list] = []
 
     if FIRST_LAYER_ENABLED:
-        for tile in world.TILES[1]:
-            tile_pos = tile[0], tile[1]
+        for layer in world.TILES[1:]:
+                for tile in layer:
+                    tile_pos = tile[0], tile[1]
 
-            if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
-                tiles_over_player.append(tile)
-                continue
+                    if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
+                        tiles_over_player.append(tile)
+                        continue
 
-            tile_size = (tile[2], tile[3])
-            tile_image = tile[4]
+                    tile_size = (tile[2], tile[3])
+                    tile_image = tile[4]
 
-            tile_rendering_pos = (
-                tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-                tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
-            )
+                    tile_rendering_pos = (
+                        tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+                        tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+                    )
 
-            # pygame.draw.rect(
-            #     render_surface,
-            #     (0, 255, 255),
-            #     (
-            #         tile[0], tile[1],
-            #         16, 16
-            #     )
-            # )
+                    # pygame.draw.rect(
+                    #     render_surface,
+                    #     (0, 255, 255),
+                    #     (
+                    #         tile[0], tile[1],
+                    #         16, 16
+                    #     )
+                    # )
 
-            render_surface.blit(tile_image, tile_rendering_pos)
+                    render_surface.blit(tile_image, tile_rendering_pos)
 
     pygame.draw.rect(
         render_surface,

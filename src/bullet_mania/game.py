@@ -59,7 +59,12 @@ def run():
             [-16, 0, 16, 16, "wall"], [0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"], [64, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
             [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"],
             [-16, 32, 16, 16, "wall"], [80, 32, 16, 16, "wall"]
-         ]
+        ],
+        [
+            [-16, -16, 16, 16, "wall"], [0, -16, 16, 16, "wall"], [16, -16, 16, 16, "wall"], [32, -16, 16, 16, "wall"], [48, -16, 16, 16, "wall"], [64, -16, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
+            [-16, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
+            [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"]
+        ]
     ]
 
     load_tiles_assets()
@@ -71,7 +76,7 @@ def run():
     load_asset("bullet", "src/bullet_mania/assets/bullet.png", (8, 8))
     load_asset("cursor", "src/bullet_mania/assets/ui/cursor.png", (11, 11))
     load_asset("heart", "src/bullet_mania/assets/ui/heart.png", (16, 16))
-    load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bulletHole.png", (12, 12))
+    load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bullet_hole.png", (12, 12))
     load_asset("ammo", "src/bullet_mania/assets/ui/ammo.png", (6, 6))
 
     while running:

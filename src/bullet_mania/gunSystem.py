@@ -15,7 +15,7 @@ shoot_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_shoot.m
 shoot_sound.set_volume(0.12)
 
 shell_falling_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_shell_falling.mp3")
-shell_falling_sound.set_volume(0.05)
+shell_falling_sound.set_volume(0.07)
 
 reload_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_reload.mp3")
 reload_sound.set_volume(0.15)

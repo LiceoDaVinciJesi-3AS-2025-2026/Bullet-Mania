@@ -10,9 +10,10 @@ from bullet_mania.config.gameConfig import *
 
 from bullet_mania.assetsManager import load_asset
 
-from bullet_mania.ui import render_ui
+from bullet_mania.uiManager import render_ui, draw_reload_text, draw_reloading_text
 from bullet_mania.gunSystem import draw_bullet_hole, shoot, start_reload, reload, draw_bullet, place_bullet_hole
-from bullet_mania.tilesManager import load_tiles, load_tiles_assets
+from bullet_mania.tilesManager import load_tiles, load_tiles_assets, draw_tile
+from bullet_mania.vfxManager import draw_vignette_effect
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -32,7 +33,7 @@ FIRST_LAYER_ENABLED = False
 running = False
 
 def run():
-    global running, FIRST_LAYER_ENABLED, BULLET_IMAGE
+    global running, FIRST_LAYER_ENABLED
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Bullet Mania - FPS: 0.00")
@@ -42,6 +43,8 @@ def run():
     pygame.mixer.music.load("src/bullet_mania/assets/sounds/music/adrenaline_rush.mp3")
     pygame.mixer.music.set_volume(0.25)
     pygame.mixer.music.play(loops=-1)
+
+    pygame.mouse.set_visible(False)
 
     render_surface = pygame.Surface(RENDER_SIZE).convert_alpha()
 
@@ -56,9 +59,9 @@ def run():
             [0, 48, 16, 16, "floor"], [16, 48, 16, 16, "floor"], [32, 48, 16, 16, "floor"], [48, 48, 16, 16, "floor"], [64, 48, 16, 16, "floor"]
         ],
         [
-            [-16, 0, 16, 16, "dark_wall"], [0, 0, 16, 16, "dark_wall"], [16, 0, 16, 16, "dark_wall"], [32, 0, 16, 16, "dark_wall"], [48, 0, 16, 16, "dark_wall"], [64, 0, 16, 16, "dark_wall"], [80, 0, 16, 16, "dark_wall"],
-            [-16, 16, 16, 16, "dark_wall"], [80, 16, 16, 16, "dark_wall"],
-            [-16, 32, 16, 16, "dark_wall"], [80, 32, 16, 16, "dark_wall"]
+            [-16, 0, 16, 16, "wall"], [0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"], [64, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
+            [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"],
+            [-16, 32, 16, 16, "wall"], [80, 32, 16, 16, "wall"]
         ],
         [
             [-16, -16, 16, 16, "Wall_0"], [0, -16, 16, 16, "top_wall"], [16, -16, 16, 16, "top_wall"], [32, -16, 16, 16, "top_wall"], [48, -16, 16, 16, "top_wall"], [64, -16, 16, 16, "top_wall"], [80, 0, 16, 16, "Wall_2"],
@@ -73,11 +76,15 @@ def run():
     if len(world.TILES) > 1:
         FIRST_LAYER_ENABLED = True
 
-    load_asset("bullet", "src/bullet_mania/assets/bullet.png", (8, 8))
+    load_asset("bullet", "src/bullet_mania/assets/sprites/bullet.png", (8, 8))
     load_asset("cursor", "src/bullet_mania/assets/ui/cursor.png", (11, 11))
     load_asset("heart", "src/bullet_mania/assets/ui/heart.png", (16, 16))
     load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bullet_hole.png", (12, 12))
     load_asset("ammo", "src/bullet_mania/assets/ui/ammo.png", (6, 6))
+    load_asset("vignette", "src/bullet_mania/assets/vfx/vignette.png", RENDER_SIZE)
+
+    load_asset("reloading_progress_bar", "src/bullet_mania/assets/ui/reloading_progress_bar.png", (32, 32))
+    load_asset("reloading_progress_tick", "src/bullet_mania/assets/ui/reloading_progress_tick.png", (5, 5))
 
     while running:
         delta_time = clock.get_time()
@@ -90,7 +97,6 @@ def run():
 
         pygame.display.flip()
         pygame.display.set_caption(f"Bullet Mania - FPS: {clock.get_fps():.2f}")
-        pygame.mouse.set_visible(False)
 
 scale = pygame.Vector2(
     WINDOW_SIZE[0] / RENDER_SIZE[0],
@@ -272,7 +278,7 @@ def update(delta_time: float):
         vfx.CAM_SHAKE_OFFSET = [0.0, 0.0]
 
 def render(render_surface: pygame.Surface, screen: pygame.Surface):
-    global FIRST_LAYER_ENABLED, BULLET_IMAGE
+    global FIRST_LAYER_ENABLED
 
     render_surface.fill(BG_COLOR)
 
@@ -280,16 +286,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     camera_y = player.POSITION[1] + PLAYER_HEIGHT / 2
 
     for tile in world.TILES[0]:
-        tile_pos = tile[0], tile[1]
-        tile_size = (tile[2], tile[3])
-        tile_image = tile[4]
-
-        tile_rendering_pos = (
-            tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-            tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
-        )
-
-        render_surface.blit(tile_image, tile_rendering_pos)
+        draw_tile(render_surface, tile, camera_x, camera_y)
 
         # pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
     
@@ -297,31 +294,22 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     if FIRST_LAYER_ENABLED:
         for layer in world.TILES[1:]:
-                for tile in layer:
-                    tile_pos = tile[0], tile[1]
+            for tile in layer:
+                tile_pos = tile[0], tile[1]
 
-                    if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
-                        tiles_over_player.append(tile)
-                        continue
+                if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
+                    tiles_over_player.append(tile)
+                    continue
+            # pygame.draw.rect(
+            #     render_surface,
+            #     (0, 255, 255),
+            #     (
+            #         tile[0], tile[1],
+            #         16, 16
+            #     )
+            # )
 
-                    tile_size = (tile[2], tile[3])
-                    tile_image = tile[4]
-
-                    tile_rendering_pos = (
-                        tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-                        tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
-                    )
-
-                    # pygame.draw.rect(
-                    #     render_surface,
-                    #     (0, 255, 255),
-                    #     (
-                    #         tile[0], tile[1],
-                    #         16, 16
-                    #     )
-                    # )
-
-                    render_surface.blit(tile_image, tile_rendering_pos)
+                draw_tile(render_surface, tile, camera_x, camera_y)
 
     pygame.draw.rect(
         render_surface,
@@ -357,36 +345,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     # )
 
     for tile in tiles_over_player:
-            tile_pos = tile[0], tile[1]
-            tile_size = (tile[2], tile[3])
-            tile_image = tile[4]
-
-            tile_rendering_pos = (
-                tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-                tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
-            )
-
-            # pygame.draw.rect(
-            #     render_surface,
-            #     (0, 255, 255),
-            #     (
-            #         tile[0], tile[1],
-            #         16, 16
-            #     )
-            # )
-
-            render_surface.blit(tile_image, tile_rendering_pos)
-
-    for bullet in world.BULLETS:
-        position = bullet[0]
-
-        bullet_rendering_position = (
-            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
-        )
-
-        draw_bullet(render_surface, bullet_rendering_position, "bullet")
-
+        draw_tile(render_surface, tile, camera_x, camera_y)
+    
     for bullet_hole in vfx.BULLET_HOLES:
         position = bullet_hole[0]
 
@@ -406,11 +366,29 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
         draw_bullet_hole(render_surface, bullet_hole_rendering_position, bullet_hole[1])
 
-    # Draw cursor
+    for bullet in world.BULLETS:
+        position = bullet[0]
+
+        bullet_rendering_position = (
+            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+        )
+
+        draw_bullet(render_surface, bullet_rendering_position, "bullet")
+
+    draw_vignette_effect(render_surface, 200)
 
     screen.blit(pygame.transform.scale(render_surface, WINDOW_SIZE), (0, 0))
 
     render_ui(screen)
+
+    alpha = math.sin(pygame.time.get_ticks() * 0.005) * 127 + 128
+
+    if player.MAG_AMMO == 0 and not player.IS_RELOADING:
+        draw_reload_text(screen, int(alpha))
+    elif player.IS_RELOADING:
+        progress = player.LAST_RELOAD_TIME / player.RELOAD_COOLDOWN
+        draw_reloading_text(screen, progress)
 
     mouse_pos = pygame.mouse.get_pos()
     screen.blit(pygame.transform.scale_by(assets.ASSETS["cursor"], scale), (mouse_pos[0] - 7, mouse_pos[1] - 7))

@@ -35,8 +35,8 @@ def draw_tile(render_surface: pygame.Surface, tile: list, camera_x: float, camer
     tile_image = tile[4]
 
     tile_rendering_pos = (
-        tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-        tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+        tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+        tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
     )
 
     tile_image.set_alpha(alpha)

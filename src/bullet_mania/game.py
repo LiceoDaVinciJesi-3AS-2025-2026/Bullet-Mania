@@ -32,6 +32,11 @@ FIRST_LAYER_ENABLED = False
 
 running = False
 
+scale = pygame.Vector2(
+    WINDOW_SIZE[0] / RENDER_SIZE[0],
+    WINDOW_SIZE[1] / RENDER_SIZE[1]
+)
+
 def run():
     global running, FIRST_LAYER_ENABLED
 
@@ -99,13 +104,23 @@ def run():
         pygame.display.flip()
         pygame.display.set_caption(f"Bullet Mania - FPS: {clock.get_fps():.2f}")
 
-scale = pygame.Vector2(
-    WINDOW_SIZE[0] / RENDER_SIZE[0],
-    WINDOW_SIZE[1] / RENDER_SIZE[1]
-)
-
 def input():
     global running
+
+    camera_x = player.POSITION[0] - RENDER_WIDTH / 2 + PLAYER_WIDTH / 2
+    camera_y = player.POSITION[1] - RENDER_HEIGHT / 2 + PLAYER_HEIGHT / 2
+
+    mouse_screen = pygame.mouse.get_pos()
+
+    mouse_render = (
+        mouse_screen[0] / scale[0],
+        mouse_screen[1] / scale[1]
+    )
+
+    mouse_world = (
+        mouse_render[0] + camera_x,
+        mouse_render[1] + camera_y
+    )
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -117,22 +132,7 @@ def input():
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1: # left click
-                mouse_screen = pygame.mouse.get_pos()
-
-                camera_x = player.POSITION[0] - RENDER_WIDTH / 2 + PLAYER_WIDTH / 2
-                camera_y = player.POSITION[1] - RENDER_HEIGHT / 2 + PLAYER_HEIGHT / 2
-
                 player_center_screen = (player.POSITION[0] + PLAYER_WIDTH / 2 + PLAYER_WIDTH, player.POSITION[1] + PLAYER_HEIGHT / 2)
-
-                mouse_render = (
-                    mouse_screen[0] / scale[0],
-                    mouse_screen[1] / scale[1]
-                )
-
-                mouse_world = (
-                    mouse_render[0] + camera_x,
-                    mouse_render[1] + camera_y
-                )
 
                 shoot(player_center_screen, mouse_world)
 
@@ -261,6 +261,28 @@ def update(delta_time: float):
         bullet_hole[1] += delta_time
         if bullet_hole[1] >= vfx.BULLET_HOLE_DURATION:
             vfx.BULLET_HOLES.remove(bullet_hole)
+
+    mouse_screen = pygame.mouse.get_pos()
+
+    mouse_render = (
+        mouse_screen[0] / scale[0],
+        mouse_screen[1] / scale[1]
+    )
+
+    center_screen = pygame.Vector2(RENDER_WIDTH / 2, RENDER_HEIGHT / 2)
+    mouse_rel_pos = pygame.Vector2(mouse_render[0], mouse_render[1]) - center_screen
+
+    LOOK_AHEAD_FACTOR = 0.15
+
+    target_offset_x = mouse_rel_pos.x * LOOK_AHEAD_FACTOR
+    target_offset_y = mouse_rel_pos.y * LOOK_AHEAD_FACTOR
+
+    MAX_OFFSET = 40
+    target_offset_x = max(-MAX_OFFSET, min(MAX_OFFSET, target_offset_x))
+    target_offset_y = max(-MAX_OFFSET, min(MAX_OFFSET, target_offset_y))
+
+    vfx.CAM_OFFSET[0] += (target_offset_x - vfx.CAM_OFFSET[0]) * 0.1
+    vfx.CAM_OFFSET[1] += (target_offset_y - vfx.CAM_OFFSET[1]) * 0.1
     
     # update vfx
     if vfx.HAS_SHOT:
@@ -306,8 +328,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         render_surface,
         CHARACTER_COLOR,
         (
-            RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-            RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1],
+            RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+            RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1],
             PLAYER_WIDTH,
             PLAYER_HEIGHT
         )
@@ -315,10 +337,19 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     # draw player gun
 
-    gun_position_x = player.POSITION[0] + PLAYER_HITBOX_WIDTH - ((PLAYER_WIDTH - PLAYER_WIDTH)/2) - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0]
-    gun_position_y = player.POSITION[1] + PLAYER_HEIGHT/2 - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+    player_center_world = (player.POSITION[0] + PLAYER_WIDTH/2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0], player.POSITION[1] + PLAYER_HEIGHT/2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1])
+    hand_offset = (6, 2)
 
-    draw_gun(render_surface, "deagle", [gun_position_x, gun_position_y])
+    gun_pivot_world = (player_center_world[0] + hand_offset[0], player_center_world[1] + hand_offset[1] - vfx.CAM_OFFSET[1])
+
+    mouse_screen = pygame.mouse.get_pos()
+
+    mouse_render = (
+        mouse_screen[0] / scale[0],
+        mouse_screen[1] / scale[1]
+    )
+
+    draw_gun(render_surface, "deagle", gun_pivot_world, mouse_render, camera_x, camera_y)
 
     for tile in tiles_over_player:
         draw_tile(render_surface, tile, camera_x, camera_y)
@@ -327,8 +358,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         position = bullet_hole[0]
 
         bullet_hole_rendering_position = (
-            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
         )
 
         draw_bullet_hole(render_surface, bullet_hole_rendering_position, bullet_hole[1])
@@ -337,8 +368,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         position = bullet[0]
 
         bullet_rendering_position = (
-            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+            position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+            position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
         )
 
         draw_bullet(render_surface, bullet_rendering_position, "bullet")
@@ -352,7 +383,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     alpha = math.sin(pygame.time.get_ticks() * 0.005) * 127 + 128
 
     if player.MAG_AMMO == 0 and not player.IS_RELOADING:
-        draw_reload_text(screen, int(alpha))
+        draw_reload_text(screen, int(255 if alpha > 100 else 0))
     elif player.IS_RELOADING:
         progress = player.LAST_RELOAD_TIME / player.RELOAD_COOLDOWN
         draw_reloading_text(screen, progress)

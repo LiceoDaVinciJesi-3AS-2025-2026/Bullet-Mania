@@ -2,8 +2,8 @@ import pygame
 
 from bullet_mania.config.gameConfig import WINDOW_SIZE, RENDER_SIZE, CHARACTER_SIZE
 
-from bullet_mania.data import assets
-
+import bullet_mania.data.assets as assets
+import bullet_mania.data.vfx as vfx
 import bullet_mania.data.player as player
 
 WINDOW_WIDTH, WINDOW_HEIGHT = WINDOW_SIZE
@@ -45,7 +45,7 @@ def draw_reload_text(screen: pygame.Surface, alpha: int):
     reload_text = TextFont.render("Reload", True, (255, 255, 255))
     reload_text.set_alpha(alpha)
 
-    screen.blit(reload_text, (WINDOW_WIDTH/2 - reload_text.get_width()/2, WINDOW_HEIGHT/2 - PLAYER_HEIGHT/2 - reload_text.get_height()/2 - 60))
+    screen.blit(reload_text, (WINDOW_WIDTH/2 - reload_text.get_width()/2 - vfx.CAM_OFFSET[0]*scale, WINDOW_HEIGHT/2 - PLAYER_HEIGHT/2 - reload_text.get_height()/2 - 60  - vfx.CAM_OFFSET[1]*scale))
 
 def draw_reloading_text(screen: pygame.Surface, progress: float):
     global reloading_progress_bar_image, reloading_progress_tick_image
@@ -56,8 +56,8 @@ def draw_reloading_text(screen: pygame.Surface, progress: float):
     if reloading_progress_tick_image is None:
         reloading_progress_tick_image = pygame.transform.scale_by(assets.ASSETS["reloading_progress_tick"], scale)
     
-    progress_bar_position_x = WINDOW_WIDTH/2 - reloading_progress_bar_image.get_width()/2
-    progress_bar_position_y = WINDOW_HEIGHT/2 - PLAYER_HEIGHT/2 - reloading_progress_bar_image.get_height()/2 - 60
+    progress_bar_position_x = WINDOW_WIDTH/2 - reloading_progress_bar_image.get_width()/2 - vfx.CAM_OFFSET[0]*scale
+    progress_bar_position_y = WINDOW_HEIGHT/2 - PLAYER_HEIGHT/2 - reloading_progress_bar_image.get_height()/2 - 60 - vfx.CAM_OFFSET[1]*scale
 
     screen.blit(reloading_progress_bar_image, (progress_bar_position_x, progress_bar_position_y))
 

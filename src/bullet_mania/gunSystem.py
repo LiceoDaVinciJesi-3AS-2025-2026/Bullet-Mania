@@ -20,6 +20,9 @@ shell_falling_sound.set_volume(0.07)
 reload_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_reload.mp3")
 reload_sound.set_volume(0.15)
 
+current_gun_id = None
+current_gun_image = None
+
 def shoot(position, mouse_pos, owner_id="local", velocity=.3, lifetime=1500):
     if player.MAG_AMMO > 0 and player.IS_RELOADING == False:
         player.MAG_AMMO -= 1
@@ -64,6 +67,20 @@ def place_bullet_hole(position):
         0.0
     ])
 
+def draw_gun(render_surface: pygame.Surface, gun_asset_id: str, gun_position: list):
+    global current_gun_id, current_gun_image
+
+    if current_gun_id is None or current_gun_id != gun_asset_id:
+        current_gun_image = pygame.transform.scale_by(assets.ASSETS[gun_asset_id], .8)
+        current_gun_id = gun_asset_id
+    
+    gun_rendering_position = (
+        gun_position[0] - current_gun_image.get_width()/2,
+        gun_position[1] - current_gun_image.get_height()/2
+    )
+
+    render_surface.blit(current_gun_image, gun_position)
+
 def draw_bullet_hole(render_surface: pygame.Surface, bullet_hole_position: list | tuple, bullet_hole_lifetime: float):
     progress = (bullet_hole_lifetime / vfx.BULLET_HOLE_DURATION)**2
     alpha = max(0, 255 - int(progress * 255))
@@ -75,5 +92,5 @@ def draw_bullet_hole(render_surface: pygame.Surface, bullet_hole_position: list 
     render_surface.blit(scaled_bullet_hole, bullet_hole_position)
 
 def draw_bullet(render_surface: pygame.Surface, bullet_position: list | tuple, bullet_name: str):
-    draw_bullet_bloom_effect(render_surface, bullet_position, 8, (255, 34, 0, 110))
+    draw_bullet_bloom_effect(render_surface, bullet_position, 8, (255, 34, 0, 10))
     render_surface.blit(pygame.transform.scale_by(assets.ASSETS[bullet_name], 0.8), bullet_position)

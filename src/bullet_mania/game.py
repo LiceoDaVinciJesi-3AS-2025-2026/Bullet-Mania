@@ -11,7 +11,7 @@ from bullet_mania.config.gameConfig import *
 from bullet_mania.assetsManager import load_asset
 
 from bullet_mania.uiManager import render_ui, draw_reload_text, draw_reloading_text
-from bullet_mania.gunSystem import draw_bullet_hole, shoot, start_reload, reload, draw_bullet, place_bullet_hole
+from bullet_mania.gunSystem import draw_bullet_hole, shoot, start_reload, reload, draw_bullet, place_bullet_hole, draw_gun
 from bullet_mania.tilesManager import load_tiles, load_tiles_assets, draw_tile
 from bullet_mania.vfxManager import draw_vignette_effect
 
@@ -62,7 +62,12 @@ def run():
             [-16, 0, 16, 16, "wall"], [0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"], [64, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
             [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"],
             [-16, 32, 16, 16, "wall"], [80, 32, 16, 16, "wall"]
-         ]
+        ],
+        [
+            [-16, -16, 16, 16, "Wall_0"], [0, -16, 16, 16, "top_wall"], [16, -16, 16, 16, "top_wall"], [32, -16, 16, 16, "top_wall"], [48, -16, 16, 16, "top_wall"], [64, -16, 16, 16, "top_wall"], [80, 0, 16, 16, "Wall_2"],
+            [-16, 0, 16, 16, "Wall_8"], [80, 0, 16, 16, "Wall_8"],
+            [-16, 16, 16, 16, "Wall_8"], [80, 16, 16, 16, "Wall_8"]
+        ]
     ]
 
     load_tiles_assets()
@@ -76,6 +81,7 @@ def run():
     load_asset("heart", "src/bullet_mania/assets/ui/heart.png", (16, 16))
     load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bullet_hole.png", (12, 12))
     load_asset("ammo", "src/bullet_mania/assets/ui/ammo.png", (6, 6))
+    load_asset("deagle", "src/bullet_mania/assets/guns/deagle.png", (24, 24))
     load_asset("vignette", "src/bullet_mania/assets/vfx/vignette.png", RENDER_SIZE)
 
     load_asset("reloading_progress_bar", "src/bullet_mania/assets/ui/reloading_progress_bar.png", (32, 32))
@@ -116,7 +122,7 @@ def input():
                 camera_x = player.POSITION[0] - RENDER_WIDTH / 2 + PLAYER_WIDTH / 2
                 camera_y = player.POSITION[1] - RENDER_HEIGHT / 2 + PLAYER_HEIGHT / 2
 
-                player_center_screen = (player.POSITION[0] + PLAYER_WIDTH / 2, player.POSITION[1] + PLAYER_HEIGHT / 2)
+                player_center_screen = (player.POSITION[0] + PLAYER_WIDTH / 2 + PLAYER_WIDTH, player.POSITION[1] + PLAYER_HEIGHT / 2)
 
                 mouse_render = (
                     mouse_screen[0] / scale[0],
@@ -282,29 +288,19 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     for tile in world.TILES[0]:
         draw_tile(render_surface, tile, camera_x, camera_y)
-
-        # pygame.draw.rect(render_surface, tile_color, (tile_rendering_pos[0], tile_rendering_pos[1], tile_size[0], tile_size[1]))
     
     tiles_over_player: list[list] = []
 
     if FIRST_LAYER_ENABLED:
-        for tile in world.TILES[1]:
-            tile_pos = tile[0], tile[1]
+        for layer in world.TILES[1:]:
+            for tile in layer:
+                tile_pos = tile[0], tile[1]
 
-            if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
-                tiles_over_player.append(tile)
-                continue
+                if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
+                    tiles_over_player.append(tile)
+                    continue
 
-            # pygame.draw.rect(
-            #     render_surface,
-            #     (0, 255, 255),
-            #     (
-            #         tile[0], tile[1],
-            #         16, 16
-            #     )
-            # )
-
-            draw_tile(render_surface, tile, camera_x, camera_y)
+                draw_tile(render_surface, tile, camera_x, camera_y)
 
     pygame.draw.rect(
         render_surface,
@@ -317,27 +313,12 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         )
     )
 
-    # pygame.draw.rect(
-    #     render_surface,
-    #     (0, 0, 255),
-    #     (
-    #         player.POSITION[0],
-    #         player.POSITION[1],
-    #         PLAYER_WIDTH,
-    #         PLAYER_HEIGHT
-    #     )
-    # )
+    # draw player gun
 
-    # pygame.draw.rect(
-    #     render_surface,
-    #     (255, 0, 0),
-    #     (
-    #         player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
-    #         player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
-    #         PLAYER_HITBOX_WIDTH,
-    #         PLAYER_HITBOX_HEIGHT
-    #     )
-    # )
+    gun_position_x = player.POSITION[0] + PLAYER_HITBOX_WIDTH - ((PLAYER_WIDTH - PLAYER_WIDTH)/2) - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0]
+    gun_position_y = player.POSITION[1] + PLAYER_HEIGHT/2 - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+
+    draw_gun(render_surface, "deagle", [gun_position_x, gun_position_y])
 
     for tile in tiles_over_player:
         draw_tile(render_surface, tile, camera_x, camera_y)
@@ -349,15 +330,6 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
             position[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
             position[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
         )
-
-        # pygame.draw.rect(
-        #     render_surface,
-        #     (255, 255, 0),
-        #     (
-        #         bullet_hole[0][0], bullet_hole[0][1],
-        #         4, 4
-        #     )
-        # )
 
         draw_bullet_hole(render_surface, bullet_hole_rendering_position, bullet_hole[1])
 

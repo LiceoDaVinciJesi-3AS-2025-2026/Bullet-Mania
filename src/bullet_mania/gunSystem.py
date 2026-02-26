@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 
 from bullet_mania.config.gameConfig import RENDER_SIZE, CHARACTER_SIZE
 from bullet_mania.data import assets
@@ -22,12 +23,15 @@ shell_falling_sound.set_volume(0.07)
 reload_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_reload.mp3")
 reload_sound.set_volume(0.15)
 
+current_bullet_hole_image = None
+current_bullet_image = None
+
 current_gun_id = None
 current_gun_image = None
 
 CURRENT_SHOOTING_ORIGIN = [0.0, 0.0]
 
-def shoot(position, mouse_pos, owner_id="local", velocity=.25, lifetime=1500):
+def shoot(position, mouse_pos, owner_id="local", velocity=.2, lifetime=1500):
     global CURRENT_SHOOTING_ORIGIN
 
     if player.MAG_AMMO > 0 and player.IS_RELOADING == False:
@@ -35,6 +39,10 @@ def shoot(position, mouse_pos, owner_id="local", velocity=.25, lifetime=1500):
 
         player_center = pygame.Vector2(CURRENT_SHOOTING_ORIGIN)
         mouse_vec = pygame.Vector2(mouse_pos)
+        mouse_vec = pygame.Vector2(
+            mouse_vec.x + random.randint(-5, 5),
+            mouse_vec.y + random.randint(-5, 5),
+        )
 
         direction = mouse_vec - player_center
 
@@ -128,20 +136,28 @@ def draw_gun(render_surface, gun_asset_id, gun_pivot_world, mouse_world, camera_
 
     muzzle_world = pygame.Vector2(gun_pivot_world) + rotated_muzzle_offset
 
-    CURRENT_SHOOTING_ORIGIN = [muzzle_world.x, muzzle_world.y - 10]
+    CURRENT_SHOOTING_ORIGIN = [muzzle_world.x, muzzle_world.y-10]
 
     render_surface.blit(rotated_image, rotated_rect)
 
 def draw_bullet_hole(render_surface: pygame.Surface, bullet_hole_position: list | tuple, bullet_hole_lifetime: float):
+    global current_bullet_hole_image
+
     progress = (bullet_hole_lifetime / vfx.BULLET_HOLE_DURATION)**2
     alpha = max(0, 255 - int(progress * 255))
 
-    bullet_hole = assets.ASSETS["bullet_hole"]
-    scaled_bullet_hole = pygame.transform.scale_by(bullet_hole, .4)
-    scaled_bullet_hole.set_alpha(alpha)
+    if current_bullet_hole_image is None:
+        current_bullet_hole_image = pygame.transform.scale_by(assets.ASSETS["bullet_hole"], .4)
 
-    render_surface.blit(scaled_bullet_hole, bullet_hole_position)
+    current_bullet_hole_image.set_alpha(alpha)
+
+    render_surface.blit(current_bullet_hole_image, bullet_hole_position)
 
 def draw_bullet(render_surface: pygame.Surface, bullet_position: list | tuple, bullet_name: str):
-    draw_bullet_bloom_effect(render_surface, bullet_position, 8, (255, 34, 0, 10))
-    render_surface.blit(pygame.transform.scale_by(assets.ASSETS[bullet_name], 0.8), bullet_position)
+    global current_bullet_image
+
+    if current_bullet_image is None:
+        current_bullet_image = assets.ASSETS[bullet_name]
+
+    render_surface.blit(current_bullet_image, bullet_position)
+    draw_bullet_bloom_effect(render_surface, bullet_position, 8, (219, 115, 64, 50))

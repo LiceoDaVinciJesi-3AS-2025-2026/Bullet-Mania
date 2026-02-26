@@ -340,7 +340,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     player_center_world = (player.POSITION[0] + PLAYER_WIDTH/2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0], player.POSITION[1] + PLAYER_HEIGHT/2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1])
     hand_offset = (6, 2)
 
-    gun_pivot_world = (player_center_world[0] + hand_offset[0], player_center_world[1] + hand_offset[1] - vfx.CAM_OFFSET[1])
+    gun_pivot_world = (player_center_world[0] + hand_offset[0], player_center_world[1] + hand_offset[1])
 
     mouse_screen = pygame.mouse.get_pos()
 
@@ -389,4 +389,4 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         draw_reloading_text(screen, progress)
 
     mouse_pos = pygame.mouse.get_pos()
-    screen.blit(pygame.transform.scale_by(assets.ASSETS["cursor"], scale), (mouse_pos[0] - 7, mouse_pos[1] - 7))
+    screen.blit(pygame.transform.scale_by(assets.ASSETS["cursor"], scale), (mouse_pos[0] - 4*scale.x, mouse_pos[1] - 4*scale.y))

@@ -23,6 +23,8 @@ import bullet_mania.data.world as world
 import bullet_mania.data.vfx as vfx
 import bullet_mania.data.assets as assets
 
+from bullet_mania import animationsManager
+
 WIDTH, HEIGHT = WINDOW_SIZE
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 
@@ -98,6 +100,10 @@ def run():
 
     load_asset("reloading_progress_bar", "src/bullet_mania/assets/ui/reloading_progress_bar.png", (32, 32))
     load_asset("reloading_progress_tick", "src/bullet_mania/assets/ui/reloading_progress_tick.png", (5, 5))
+
+    if "player_walk" in assets.SPRITES_ANIMATIONS:
+        animationsManager.register_animation("player_walk", assets.SPRITES_ANIMATIONS["player_walk"], 100, loop=True)
+        animationsManager.play_animation("player_walk")
 
     while running:
         delta_time = clock.get_time()
@@ -180,6 +186,8 @@ def input():
 
 def update(delta_time: float):
     global FIRST_LAYER_ENABLED
+
+    animationsManager.update_all(delta_time)
 
     # update player position with dashing
     if player.DASH_COOLDOWN_TIMER > 0:

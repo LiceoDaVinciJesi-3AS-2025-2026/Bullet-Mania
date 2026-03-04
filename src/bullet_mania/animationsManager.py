@@ -55,7 +55,7 @@ def update_animation(anim_id, delta_time):
                         animation["is_finished"] = True
                         animation["is_playing"] = False
 
-def udate_all(delta_time):
+def update_all(delta_time):
     for anim_id in animations:
         if animations[anim_id]["is_playing"]:
             update_animation(anim_id, delta_time)

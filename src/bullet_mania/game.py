@@ -10,10 +10,13 @@ from bullet_mania.config.gameConfig import *
 
 from bullet_mania.assetsManager import load_asset
 
-from bullet_mania.uiManager import render_ui, draw_reload_text, draw_reloading_text
-from bullet_mania.gunSystem import draw_bullet_hole, shoot, start_reload, reload, draw_bullet, place_bullet_hole, draw_gun
-from bullet_mania.tilesManager import load_tiles, load_tiles_assets, draw_tile
-from bullet_mania.vfxManager import draw_vignette_effect
+from bullet_mania.uiManager import *
+from bullet_mania.gunSystem import *
+from bullet_mania.tilesManager import *
+from bullet_mania.vfxManager import *
+
+from bullet_mania.ai.aiTilesHandler import build_ai_tiles_grid
+from bullet_mania.ai.aiManager import draw_bots, update_bots, add_bot
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -32,7 +35,7 @@ FIRST_LAYER_ENABLED = False
 
 running = False
 
-scale = pygame.Vector2(
+render_scale = (
     WINDOW_SIZE[0] / RENDER_SIZE[0],
     WINDOW_SIZE[1] / RENDER_SIZE[1]
 )
@@ -78,6 +81,10 @@ def run():
     load_tiles_assets()
     load_tiles(tiles_data_test, world.TILES)
 
+    build_ai_tiles_grid()
+
+    add_bot([20, 20])
+
     if len(world.TILES) > 1:
         FIRST_LAYER_ENABLED = True
 
@@ -113,8 +120,8 @@ def input():
     mouse_screen = pygame.mouse.get_pos()
 
     mouse_render = (
-        mouse_screen[0] / scale[0],
-        mouse_screen[1] / scale[1]
+        mouse_screen[0] / render_scale[0],
+        mouse_screen[1] / render_scale[1]
     )
 
     mouse_world = (
@@ -261,12 +268,14 @@ def update(delta_time: float):
         bullet_hole[1] += delta_time
         if bullet_hole[1] >= vfx.BULLET_HOLE_DURATION:
             vfx.BULLET_HOLES.remove(bullet_hole)
+    
+    update_bots(delta_time)
 
     mouse_screen = pygame.mouse.get_pos()
 
     mouse_render = (
-        mouse_screen[0] / scale[0],
-        mouse_screen[1] / scale[1]
+        mouse_screen[0] / render_scale[0],
+        mouse_screen[1] / render_scale[1]
     )
 
     center_screen = pygame.Vector2(RENDER_WIDTH / 2, RENDER_HEIGHT / 2)
@@ -345,8 +354,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     mouse_screen = pygame.mouse.get_pos()
 
     mouse_render = (
-        mouse_screen[0] / scale[0],
-        mouse_screen[1] / scale[1]
+        mouse_screen[0] / render_scale[0],
+        mouse_screen[1] / render_scale[1]
     )
 
     draw_gun(render_surface, "deagle", gun_pivot_world, mouse_render, camera_x, camera_y)
@@ -354,6 +363,8 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     for tile in tiles_over_player:
         draw_tile(render_surface, tile, camera_x, camera_y)
     
+    draw_bots(render_surface, camera_x, camera_y)
+
     for bullet_hole in vfx.BULLET_HOLES:
         position = bullet_hole[0]
 
@@ -389,4 +400,4 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         draw_reloading_text(screen, progress)
 
     mouse_pos = pygame.mouse.get_pos()
-    screen.blit(pygame.transform.scale_by(assets.ASSETS["cursor"], scale), (mouse_pos[0] - 4*scale.x, mouse_pos[1] - 4*scale.y))
+    screen.blit(pygame.transform.scale_by(assets.ASSETS["cursor"], render_scale), (mouse_pos[0] - 4*render_scale[0], mouse_pos[1] - 4*render_scale[0]))

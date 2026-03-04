@@ -65,8 +65,10 @@ def draw_reloading_text(screen: pygame.Surface, progress: float):
     tick_width = reloading_progress_tick_image.get_width()
     tick_height = reloading_progress_tick_image.get_height()
 
+    progress = progress*32*scale
+
     screen.blit(reloading_progress_tick_image, (
-        progress_bar_position_x + 3*scale + (progress*100) - tick_width/2,
+        progress_bar_position_x + progress - tick_width/2,
         progress_bar_position_y + reloading_progress_bar_image.get_height()/2 - tick_height/2 - 1
     ))
 

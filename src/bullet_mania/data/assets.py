@@ -1,4 +1,4 @@
 import pygame
 
 ASSETS: dict[str, pygame.Surface] = {}
-SPRITE_SHEETS: dict[str, list] = {}
+SPRITES_ANIMATIONS: dict[str, list] = {}

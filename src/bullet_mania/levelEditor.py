@@ -19,13 +19,23 @@ import bullet_mania.data.assets as assets
 WIDTH, HEIGHT = WINDOW_SIZE
 
 CURRENT_LAYER = 0
-LEVEL_TILES: list[list] = []
+TILES: list[list] = []
 
 CAMERA_POSITION = [0.0, 0.0]
 CAMERA_VELOCITY = [0.0, 0.0]
 CAMERA_SENS = 0.05
 
 running = False
+
+TextFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 25)
+NumberFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 35)
+
+def draw_editor_ui(screen: pygame.Surface):
+    global CURRENT_LAYER
+
+    current_layer_text = TextFont.render(f"Current Layer: {CURRENT_LAYER}", True, (255, 255, 255))
+
+    screen.blit(current_layer_text, (20, 20))
 
 def run_editor():
     global running
@@ -89,3 +99,5 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     pygame.draw.rect(render_surface, (255, 0, 255), (0 - CAMERA_POSITION[0], 0 - CAMERA_POSITION[1], 16, 16))
 
     screen.blit(pygame.transform.scale(render_surface, (WIDTH, HEIGHT)), (0, 0))
+
+    draw_editor_ui(screen)

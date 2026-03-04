@@ -29,7 +29,10 @@ CHASE = 1
 ATTACK = 2
 
 def distance(a, b):
-    return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+    a = pygame.Vector2(a)
+    b = pygame.Vector2(b)
+
+    return a.distance_to(b)
 
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -142,22 +145,24 @@ def move_towards_player(bot, delta_time):
     follow_path(bot, delta_time)
 
 def state_idle(bot):
-    if distance(bot[0], player.POSITION) <= 6:
+    dist = distance(bot[0], player.POSITION)
+
+    if dist <= 100:
         bot[1] = CHASE
 
 def state_chase(bot, delta_time):
     dist = distance(bot[0], player.POSITION)
 
-    if dist < 3:
-        bot[1] = ATTACK
-        return
+    # if dist < 3:
+    #     bot[1] = ATTACK
+    #     return
 
     move_towards_player(bot, delta_time)
 
 def state_attack(bot, delta_time):
     print(f"Gli sto sparando al culoz!! (DT: {delta_time})")
 
-def add_bot(position, speed=0.01, hp=100.0):
+def add_bot(position, speed=0.1, hp=100.0):
     bot = [
         position, # position
         0, # state
@@ -182,8 +187,10 @@ def update_bots(delta_time):
             state_attack(bot, delta_time)
 
 def draw_bots(render_surface: pygame.Surface, camera_x: float, camera_y: float):
-    for bot in bots:
+    for index, bot in enumerate(bots):
         bot_pos = bot[0]
+
+        print(f"Distanza: {distance(bot_pos, player.POSITION)}")
 
         bot_rendering_pos = (
             bot_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],

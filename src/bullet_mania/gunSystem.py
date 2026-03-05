@@ -64,7 +64,7 @@ def shoot(position, mouse_pos, owner_id="local", velocity=.3, lifetime=1500):
         shell_falling_sound.play()
 
 def start_reload():
-    if not player.IS_RELOADING and player.MAG_AMMO < 10:
+    if not player.IS_RELOADING and player.MAG_AMMO < player.MAG_SIZE:
         player.IS_RELOADING = True
 
 def reload():

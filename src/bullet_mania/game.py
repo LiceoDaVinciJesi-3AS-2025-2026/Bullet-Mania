@@ -112,6 +112,10 @@ def run():
     if "player_walk" in assets.SPRITES_ANIMATIONS:
         animationsManager.register_animation("player_walk", assets.SPRITES_ANIMATIONS["player_walk"], 100, loop=True)
         animationsManager.play_animation("player_walk")
+        
+    if "player_idle" in assets.SPRITES_ANIMATIONS:
+        animationsManager.register_animation("player_idle", assets.SPRITES_ANIMATIONS["player_idle"], 100, loop=True)
+        animationsManager.play_animation("player_idle")
 
     while running:
         delta_time = clock.get_time()
@@ -245,6 +249,17 @@ def update(delta_time: float):
                     else:
                         player.POSITION[1] += intersection.height
     
+    # update animations
+    animationsManager.update_all(delta_time)
+    
+    if velocity.length() > 0:
+        if not animationsManager.is_playing("player_walk"):
+            animationsManager.play_animation("player_walk")
+    else:
+        animationsManager.stop_animation("player_walk")
+        if not animationsManager.is_playing("player_idle"):
+            animationsManager.play_animation("player_idle")
+    
     # update reloading logic
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
         reload()
@@ -359,6 +374,17 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
             PLAYER_HEIGHT
         )
     )
+
+    #per quando metto le animazioni
+    
+    #animationsManager.draw_animation(
+    #    render_surface, 
+    #    "player_idle", 
+    #    (
+    #        RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
+    #        RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
+    #    )
+    #)
 
     # draw player gun
 

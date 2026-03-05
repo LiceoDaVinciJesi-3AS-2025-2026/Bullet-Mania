@@ -144,22 +144,25 @@ def move_towards_player(bot, delta_time):
 
     follow_path(bot, delta_time)
 
-def state_idle(bot):
-    dist = distance(bot[0], player.POSITION)
-
-    if dist <= 100:
+def state_idle(bot, dist):
+    if dist <= 150:
         bot[1] = CHASE
 
-def state_chase(bot, delta_time):
-    dist = distance(bot[0], player.POSITION)
+def state_chase(bot, delta_time, dist):
+    if dist >= 250:
+        bot[1] = IDLE
+        return
 
-    # if dist < 3:
-    #     bot[1] = ATTACK
-    #     return
+    elif dist <= 100:
+        bot[1] = ATTACK
+        return
 
     move_towards_player(bot, delta_time)
 
-def state_attack(bot, delta_time):
+def state_attack(bot, delta_time, dist):
+    if dist >= 150:
+        bot[1] = CHASE
+
     print(f"Gli sto sparando al culoz!! (DT: {delta_time})")
 
 def add_bot(position, speed=0.08, hp=100.0):
@@ -177,14 +180,16 @@ def add_bot(position, speed=0.08, hp=100.0):
 
 def update_bots(delta_time):
     for bot in bots[:]:
+        dist = distance(bot[0], player.POSITION)
+
         if bot[1] == IDLE:
-            state_idle(bot)
+            state_idle(bot, dist)
 
         elif bot[1] == CHASE:
-            state_chase(bot, delta_time)
+            state_chase(bot, delta_time, dist)
 
         elif bot[1] == ATTACK:
-            state_attack(bot, delta_time)
+            state_attack(bot, delta_time, dist)
 
 def draw_bots(render_surface: pygame.Surface, camera_x: float, camera_y: float):
     for index, bot in enumerate(bots):

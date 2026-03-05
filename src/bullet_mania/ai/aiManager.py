@@ -192,7 +192,7 @@ def update_bots(delta_time):
             state_attack(bot, delta_time, dist)
 
 def draw_bots(render_surface: pygame.Surface, camera_x: float, camera_y: float):
-    for index, bot in enumerate(bots):
+    for bot in bots:
         bot_pos = bot[0]
 
         print(f"Distanza: {distance(bot_pos, player.POSITION)}")

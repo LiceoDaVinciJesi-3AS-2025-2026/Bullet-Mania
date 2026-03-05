@@ -162,7 +162,7 @@ def state_chase(bot, delta_time):
 def state_attack(bot, delta_time):
     print(f"Gli sto sparando al culoz!! (DT: {delta_time})")
 
-def add_bot(position, speed=0.1, hp=100.0):
+def add_bot(position, speed=0.08, hp=100.0):
     bot = [
         position, # position
         0, # state

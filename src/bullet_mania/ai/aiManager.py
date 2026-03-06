@@ -19,14 +19,18 @@ import bullet_mania.data.player as player
 import bullet_mania.data.vfx as vfx
 
 import bullet_mania.ai.aiTilesHandler as ai_tiles
+import bullet_mania.ai.aiGunSystem as ai_gun_system
 
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
+PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 
 bots: list[list] = []
 
 IDLE = 0
 CHASE = 1
 ATTACK = 2
+
+ATTACK_COOLDOWN = 2000.0
 
 def distance(a, b):
     a = pygame.Vector2(a)
@@ -35,7 +39,9 @@ def distance(a, b):
     return a.distance_to(b)
 
 def heuristic(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    dx = abs(a[0] - b[0])
+    dy = abs(a[1] - b[1])
+    return max(dx, dy)
 
 def reconstruct_path(came_from, current):
     path = [current]
@@ -51,7 +57,10 @@ def get_neighbors(node, grid):
     x, y = node
     neighbors = []
 
-    directions = [(1,0), (-1,0), (0,1), (0,-1)]
+    directions = [
+        (1,0), (-1,0), (0,1), (0,-1),
+        (1,1), (-1,1), (1,-1), (-1,-1)
+    ]
 
     for dx, dy in directions:
         nx = x + dx
@@ -64,6 +73,9 @@ def get_neighbors(node, grid):
     return neighbors
 
 def astar(grid, start, goal):
+    if ai_tiles.AI_TILES_GRID[int(goal[1])][int(goal[0])] != 0:
+        return []
+
     open_list = []
     open_list.append(start)
 
@@ -83,8 +95,15 @@ def astar(grid, start, goal):
         neighbors = get_neighbors(current, grid)
 
         for neighbor in neighbors:
+            dx = neighbor[0] - current[0]
+            dy = neighbor[1] - current[1]
 
-            tentative_g = g_score[current] + 1
+            if dx != 0 and dy != 0:
+                cost = 1.414
+            else:
+                cost = 1
+
+            tentative_g = g_score[current] + cost
 
             if tentative_g < g_score.get(neighbor, float("inf")):
 
@@ -98,7 +117,6 @@ def astar(grid, start, goal):
     return []
 
 def follow_path(bot, delta_time):
-
     if len(bot[5]) <= 1:
         return
 
@@ -131,10 +149,20 @@ def follow_path(bot, delta_time):
             bot[0][1] += direction_y * move_distance
 
 def move_towards_player(bot, delta_time):
+    start = (int(bot[0][0] // 16), int(bot[0][1] // 16))
+    goal = (int((player.POSITION[0] + PLAYER_WIDTH//2) // 16), int((player.POSITION[1] + PLAYER_HEIGHT//2) // 16))
+
+    if not (0 <= goal[0] < MAP_WIDTH and 0 <= goal[1] < MAP_HEIGHT):
+        return
+
+    # controlla che lo start sia valido
+    if not (0 <= start[0] < MAP_WIDTH and 0 <= start[1] < MAP_HEIGHT):
+        return
+
     if not bot[5] or bot[6] <= 0:
 
         start = (bot[0][0] // 16, bot[0][1] // 16)
-        goal = (player.POSITION[0] // 16, player.POSITION[1] // 16)
+        goal = ((player.POSITION[0] + PLAYER_WIDTH//2) // 16, (player.POSITION[1] + PLAYER_HEIGHT//2) // 16)
 
         bot[5] = astar(ai_tiles.AI_TILES_GRID, start, goal)
         bot[6] = 0.5
@@ -163,7 +191,12 @@ def state_attack(bot, delta_time, dist):
     if dist >= 150:
         bot[1] = CHASE
 
-    print(f"Gli sto sparando al culoz!! (DT: {delta_time})")
+    if bot[4] <= 0:
+        bot[4] = ATTACK_COOLDOWN
+        ai_gun_system.shoot_to_player(bot)
+
+    else:
+        bot[4] -= delta_time
 
 def add_bot(position, speed=0.08, hp=100.0):
     bot = [
@@ -180,6 +213,10 @@ def add_bot(position, speed=0.08, hp=100.0):
 
 def update_bots(delta_time):
     for bot in bots[:]:
+        if bot[3] <= 0:
+            bots.remove(bot)
+            continue
+
         dist = distance(bot[0], player.POSITION)
 
         if bot[1] == IDLE:
@@ -194,8 +231,6 @@ def update_bots(delta_time):
 def draw_bots(render_surface: pygame.Surface, camera_x: float, camera_y: float):
     for bot in bots:
         bot_pos = bot[0]
-
-        print(f"Distanza: {distance(bot_pos, player.POSITION)}")
 
         bot_rendering_pos = (
             bot_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],

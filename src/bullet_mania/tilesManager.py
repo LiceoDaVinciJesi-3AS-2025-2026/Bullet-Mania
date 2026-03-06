@@ -8,6 +8,8 @@ import bullet_mania.data.vfx as vfx
 
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 
+TILES_BUFFER: list[tuple] = []
+
 def load_tiles_assets(assets_dir="./assets/tiles/"):
     base_path = os.path.dirname(os.path.abspath(__file__))
     full_path = os.path.join(base_path, assets_dir)
@@ -29,7 +31,7 @@ def load_tiles(tiles_data, tiles_list):
 
             tiles_list[-1].append((x, y, width, height, image))
 
-def draw_tile(render_surface: pygame.Surface, tile: list, camera_x: float, camera_y: float, alpha: int = 255):
+def draw_tile(tile: list, camera_x: float, camera_y: float, alpha: int = 255):
     tile_pos = tile[0], tile[1]
     tile_size = (tile[2], tile[3])
     tile_image = tile[4]
@@ -41,4 +43,10 @@ def draw_tile(render_surface: pygame.Surface, tile: list, camera_x: float, camer
 
     tile_image.set_alpha(alpha)
 
-    render_surface.blit(tile_image, tile_rendering_pos)
+    TILES_BUFFER.append((tile_image, tile_rendering_pos))
+
+def draw_tiles_buffer(render_surface: pygame.Surface):
+    global TILES_BUFFER
+
+    render_surface.blits(blit_sequence=TILES_BUFFER)
+    TILES_BUFFER = []

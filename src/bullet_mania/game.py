@@ -17,7 +17,7 @@ from bullet_mania.vfxManager import *
 from bullet_mania.animationsManager import *
 
 from bullet_mania.ai.aiTilesHandler import build_ai_tiles_grid
-from bullet_mania.ai.aiManager import draw_bots, update_bots, add_bot
+from bullet_mania.ai.aiManager import draw_bots, update_bots, add_bot, bots
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -27,10 +27,11 @@ import bullet_mania.data.assets as assets
 WIDTH, HEIGHT = WINDOW_SIZE
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 
+BOT_WIDTH, BOT_HEIGHT = BOT_CHARACTER_SIZE
+BOT_HITBOX_WIDTH, BOT_HITBOX_HEIGHT = BOT_CHARACTER_HITBOX_SIZE
+
 PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT = CHARACTER_HITBOX_SIZE
-
-player.POSITION = [0.0, 0.0]
 
 FIRST_LAYER_ENABLED = False
 
@@ -49,7 +50,7 @@ def run():
 
     pygame.mixer.set_num_channels(32)
 
-    pygame.mixer.music.load("src/bullet_mania/assets/sounds/music/adrenaline_rush.mp3")
+    pygame.mixer.music.load("src/bullet_mania/assets/sounds/music/Gungeon_up_Gungeon_Down.mp3")
     pygame.mixer.music.set_volume(0.25)
     pygame.mixer.music.play(loops=-1)
 
@@ -80,7 +81,12 @@ def run():
     # ]
 
     tiles_data_test = [
-        []
+        [],
+        [
+            [-16, 0, 16, 16, "wall"], [0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"], [64, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
+            [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"],
+            [-16, 32, 16, 16, "wall"], [80, 32, 16, 16, "wall"]
+        ]
     ]
 
     for x in range(MAP_WIDTH):
@@ -92,7 +98,10 @@ def run():
 
     build_ai_tiles_grid()
 
-    add_bot([20, 170])
+    for x in range(20):
+        bot_pos = [ 100 * random.random() + random.randint(1, 500), 100 * random.random() + random.randint(1, 500) ]
+
+        add_bot(bot_pos)
 
     if len(world.TILES) > 1:
         FIRST_LAYER_ENABLED = True
@@ -222,15 +231,15 @@ def update(delta_time: float):
     player.POSITION[0] += velocity[0] * CHARACTER_SPEED * speed_multiplier * delta_time
     player.POSITION[1] += velocity[1] * CHARACTER_SPEED * speed_multiplier * delta_time
 
+    player_rect = pygame.Rect(
+        player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+        player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+        PLAYER_HITBOX_WIDTH,
+        PLAYER_HITBOX_HEIGHT
+    )
+
     # collision with tiles
     if FIRST_LAYER_ENABLED:
-        player_rect = pygame.Rect(
-            player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
-            player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
-            PLAYER_HITBOX_WIDTH,
-            PLAYER_HITBOX_HEIGHT
-        )
-
         for tile in world.TILES[1]:
             tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
 
@@ -270,9 +279,9 @@ def update(delta_time: float):
     for bullet in world.BULLETS[:]:
         should_destroy = False
 
-        if FIRST_LAYER_ENABLED:
-            bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
+        bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
 
+        if FIRST_LAYER_ENABLED:
             for tile in world.TILES[1]:
                 tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
 
@@ -281,6 +290,30 @@ def update(delta_time: float):
 
                     should_destroy = True
                     break
+
+        if player_rect.colliderect(bullet_rect) and bullet[4] != "local" and not player.IS_DASHING:
+            player.LIVES -= 1
+
+            should_destroy = True
+        
+        for bot in bots:
+            bot_pos = bot[0]
+
+            # player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+            # player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+            
+            bot_rect = pygame.Rect(
+                bot_pos[0] + (BOT_WIDTH - BOT_HITBOX_WIDTH) // 2,
+                bot_pos[1] + (BOT_HEIGHT - BOT_HITBOX_HEIGHT) // 2,
+                BOT_HITBOX_WIDTH,
+                BOT_HITBOX_HEIGHT
+            )
+
+            if bot_rect.colliderect(bullet_rect) and not bullet[4].startswith("_bot"):
+                bot[3] -= 35
+                should_destroy = True
+
+                break
 
         if bullet[3] <= 0 or should_destroy:
             world.BULLETS.remove(bullet)
@@ -347,10 +380,25 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     camera_x = player.POSITION[0] + PLAYER_WIDTH / 2
     camera_y = player.POSITION[1] + PLAYER_HEIGHT / 2
 
+    floor_tiles: list[tuple] = []
+
     for tile in world.TILES[0]:
-        draw_tile(render_surface, tile, camera_x, camera_y)
-    
-    tiles_over_player: list[list] = []
+        tile_pos = tile[0], tile[1]
+        tile_size = (tile[2], tile[3])
+        tile_image = tile[4]
+
+        tile_rendering_pos = (
+            tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+            tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
+        )
+
+        floor_tiles.append((tile_image, tile_rendering_pos))
+
+        draw_tile(tile, camera_x, camera_y)
+
+    draw_tiles_buffer(render_surface)
+
+    tiles_over_player: list[tuple] = []
 
     if FIRST_LAYER_ENABLED:
         for layer in world.TILES[1:]:
@@ -358,10 +406,12 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
                 tile_pos = tile[0], tile[1]
 
                 if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
-                    tiles_over_player.append(tile)
+                    tiles_over_player.append(tile[0])
                     continue
 
-                draw_tile(render_surface, tile, camera_x, camera_y)
+                draw_tile(tile, camera_x, camera_y)
+
+    draw_tiles_buffer(render_surface)
 
     pygame.draw.rect(
         render_surface,
@@ -402,7 +452,9 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     draw_gun(render_surface, "deagle", gun_pivot_world, mouse_render, camera_x, camera_y)
 
     for tile in tiles_over_player:
-        draw_tile(render_surface, tile, camera_x, camera_y)
+        draw_tile(tile, camera_x, camera_y)
+    
+    draw_tiles_buffer(render_surface)
     
     draw_bots(render_surface, camera_x, camera_y)
 

@@ -14,6 +14,7 @@ from bullet_mania.uiManager import *
 from bullet_mania.gunSystem import *
 from bullet_mania.tilesManager import *
 from bullet_mania.vfxManager import *
+from bullet_mania.animationsManager import *
 
 from bullet_mania.ai.aiTilesHandler import build_ai_tiles_grid
 from bullet_mania.ai.aiManager import draw_bots, update_bots, add_bot
@@ -22,8 +23,6 @@ import bullet_mania.data.player as player
 import bullet_mania.data.world as world
 import bullet_mania.data.vfx as vfx
 import bullet_mania.data.assets as assets
-
-from bullet_mania import animationsManager
 
 WIDTH, HEIGHT = WINDOW_SIZE
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
@@ -110,12 +109,12 @@ def run():
     load_asset("reloading_progress_tick", "src/bullet_mania/assets/ui/reloading_progress_tick.png", (5, 5))
 
     if "player_walk" in assets.SPRITES_ANIMATIONS:
-        animationsManager.register_animation("player_walk", assets.SPRITES_ANIMATIONS["player_walk"], 100, loop=True)
-        animationsManager.play_animation("player_walk")
-        
+        register_animation("player_walk", assets.SPRITES_ANIMATIONS["player_walk"], 100, loop=True)
+        play_animation("player_walk")
+
     if "player_idle" in assets.SPRITES_ANIMATIONS:
-        animationsManager.register_animation("player_idle", assets.SPRITES_ANIMATIONS["player_idle"], 100, loop=True)
-        animationsManager.play_animation("player_idle")
+        register_animation("player_idle", assets.SPRITES_ANIMATIONS["player_idle"], 100, loop=True)
+        play_animation("player_idle")
 
     while running:
         delta_time = clock.get_time()
@@ -199,7 +198,7 @@ def input():
 def update(delta_time: float):
     global FIRST_LAYER_ENABLED
 
-    animationsManager.update_all(delta_time)
+    update_all(delta_time)
 
     # update player position with dashing
     if player.DASH_COOLDOWN_TIMER > 0:
@@ -250,15 +249,15 @@ def update(delta_time: float):
                         player.POSITION[1] += intersection.height
     
     # update animations
-    animationsManager.update_all(delta_time)
+    update_all(delta_time)
     
     if velocity.length() > 0:
-        if not animationsManager.is_playing("player_walk"):
-            animationsManager.play_animation("player_walk")
+        if not is_playing("player_walk"):
+            play_animation("player_walk")
     else:
-        animationsManager.stop_animation("player_walk")
-        if not animationsManager.is_playing("player_idle"):
-            animationsManager.play_animation("player_idle")
+        stop_animation("player_walk")
+        if not is_playing("player_idle"):
+            play_animation("player_idle")
     
     # update reloading logic
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
@@ -377,7 +376,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     #per quando metto le animazioni
     
-    #animationsManager.draw_animation(
+    #draw_animation(
     #    render_surface, 
     #    "player_idle", 
     #    (

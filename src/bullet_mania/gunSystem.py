@@ -130,7 +130,7 @@ def draw_gun(render_surface, gun_asset_id, gun_pivot_world, mouse_world, camera_
     # Il nuovo centro è semplicemente: (posizione del pivot a schermo) + (vettore ruotato)
     rotated_rect.center = screen_pivot + rotated_pivot_to_center
 
-    muzzle_offset_local = pygame.Vector2(img.get_width(), 0)
+    muzzle_offset_local = pygame.Vector2(img.get_width()*1.5, 0)
 
     rotated_muzzle_offset = muzzle_offset_local.rotate(-angle)
 

@@ -1,7 +1,5 @@
 import pygame
 
-import bullet_mania.data.assets as assets
-
 animations = {}
 
 def register_animation(anim_id, frames, frame_duration, loop=True):
@@ -66,10 +64,10 @@ def get_current_frame(anim_id):
         return animation["frames"][animation["current_frame"]]
     return None
 
-def draw_animation(render_surface, anim_id, position):
+def draw_animation(render_surface, anim_id, position, is_flipped=False):
     current_frame = get_current_frame(anim_id)
     if current_frame:
-        render_surface.blit(current_frame, position)
+        render_surface.blit(pygame.transform.flip(current_frame, is_flipped, False), position)
 
 def is_playing(anim_id):
     return anim_id in animations and animations[anim_id]["is_playing"]

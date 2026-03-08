@@ -392,6 +392,12 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
             tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
         )
 
+        if tile_rendering_pos[0] > RENDER_WIDTH or tile_rendering_pos[0] + tile_size[0] < 0:
+            continue
+
+        if tile_rendering_pos[1] > RENDER_HEIGHT or tile_rendering_pos[1] + tile_size[1] < 0:
+            continue
+
         floor_tiles.append((tile_image, tile_rendering_pos))
 
         draw_tile(tile, camera_x, camera_y)

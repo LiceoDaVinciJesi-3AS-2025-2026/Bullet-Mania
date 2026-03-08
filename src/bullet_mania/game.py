@@ -258,7 +258,7 @@ def update(delta_time: float):
                         player.POSITION[1] += intersection.height
     
     # update animations
-    update_all(delta_time)
+    
     
     if velocity.length() > 0:
         if not is_playing("player_walk"):

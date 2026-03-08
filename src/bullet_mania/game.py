@@ -15,6 +15,7 @@ from bullet_mania.gunSystem import *
 from bullet_mania.tilesManager import *
 from bullet_mania.vfxManager import *
 from bullet_mania.animationsManager import *
+from bullet_mania.spritesManager import load_spritesheet
 
 from bullet_mania.ai.aiTilesHandler import build_ai_tiles_grid
 from bullet_mania.ai.aiManager import draw_bots, update_bots, add_bot, bots
@@ -111,11 +112,17 @@ def run():
     load_asset("heart", "src/bullet_mania/assets/ui/heart.png", (16, 16))
     load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bullet_hole.png", (12, 12))
     load_asset("ammo", "src/bullet_mania/assets/ui/ammo.png", (6, 6))
-    load_asset("deagle", "src/bullet_mania/assets/guns/deagle.png", (24, 24))
+    load_asset("deagle", "src/bullet_mania/assets/guns/deagle.png", (20, 20))
     load_asset("vignette", "src/bullet_mania/assets/vfx/vignette.png", RENDER_SIZE)
+    load_asset("shadow", "src/bullet_mania/assets/sprites/shadow.png", (16, 16))
+
+    assets.ASSETS["shadow"].set_alpha(100)
 
     load_asset("reloading_progress_bar", "src/bullet_mania/assets/ui/reloading_progress_bar.png", (32, 32))
     load_asset("reloading_progress_tick", "src/bullet_mania/assets/ui/reloading_progress_tick.png", (5, 5))
+
+    load_spritesheet("player_idle", pygame.image.load("src/bullet_mania/assets/sprites/animations/idle.png"), 24, 24, 0, 4)
+    load_spritesheet("player_walk", pygame.image.load("src/bullet_mania/assets/sprites/animations/run.png"), 24, 24, 0, 4)
 
     if "player_walk" in assets.SPRITES_ANIMATIONS:
         register_animation("player_walk", assets.SPRITES_ANIMATIONS["player_walk"], 100, loop=True)
@@ -154,6 +161,11 @@ def input():
         mouse_render[0] + camera_x,
         mouse_render[1] + camera_y
     )
+
+    if mouse_render[0] < RENDER_WIDTH // 2:
+        player.SIDE = 0
+    else:
+        player.SIDE = 1
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -206,8 +218,6 @@ def input():
 
 def update(delta_time: float):
     global FIRST_LAYER_ENABLED
-
-    update_all(delta_time)
 
     # update player position with dashing
     if player.DASH_COOLDOWN_TIMER > 0:
@@ -263,10 +273,12 @@ def update(delta_time: float):
     if velocity.length() > 0:
         if not is_playing("player_walk"):
             play_animation("player_walk")
+        player.CURRENT_ANIM_ID = "player_walk"
     else:
         stop_animation("player_walk")
         if not is_playing("player_idle"):
             play_animation("player_idle")
+        player.CURRENT_ANIM_ID = "player_idle"
     
     # update reloading logic
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
@@ -380,12 +392,9 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     camera_x = player.POSITION[0] + PLAYER_WIDTH / 2
     camera_y = player.POSITION[1] + PLAYER_HEIGHT / 2
 
-    floor_tiles: list[tuple] = []
-
     for tile in world.TILES[0]:
         tile_pos = tile[0], tile[1]
         tile_size = (tile[2], tile[3])
-        tile_image = tile[4]
 
         tile_rendering_pos = (
             tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
@@ -398,8 +407,6 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         if tile_rendering_pos[1] > RENDER_HEIGHT or tile_rendering_pos[1] + tile_size[1] < 0:
             continue
 
-        floor_tiles.append((tile_image, tile_rendering_pos))
-
         draw_tile(tile, camera_x, camera_y)
 
     draw_tiles_buffer(render_surface)
@@ -410,6 +417,18 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         for layer in world.TILES[1:]:
             for tile in layer:
                 tile_pos = tile[0], tile[1]
+                tile_size = (tile[2], tile[3])
+
+                tile_rendering_pos = (
+                    tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+                    tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
+                )
+
+                if tile_rendering_pos[0] > RENDER_WIDTH or tile_rendering_pos[0] + tile_size[0] < 0:
+                    continue
+
+                if tile_rendering_pos[1] > RENDER_HEIGHT or tile_rendering_pos[1] + tile_size[1] < 0:
+                    continue
 
                 if tile_pos[1] + tile[3] > player.POSITION[1] + PLAYER_HEIGHT and tile_pos[0] > player.POSITION[0] + PLAYER_WIDTH and tile_pos[0] + tile[3] < player.POSITION[0]:
                     tiles_over_player.append(tile[0])
@@ -419,27 +438,33 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
 
     draw_tiles_buffer(render_surface)
 
-    pygame.draw.rect(
-        render_surface,
-        CHARACTER_COLOR,
-        (
-            RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
-            RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1],
-            PLAYER_WIDTH,
-            PLAYER_HEIGHT
-        )
-    )
+    render_surface.blit(assets.ASSETS["shadow"], (
+        RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + (PLAYER_WIDTH - 16)//2  + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+        RENDER_HEIGHT / 2 + (PLAYER_HEIGHT - 16)//2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1],
+    ))
+
+    # pygame.draw.rect(
+    #     render_surface,
+    #     CHARACTER_COLOR,
+    #     (
+    #         RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+    #         RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1],
+    #         PLAYER_WIDTH,
+    #         PLAYER_HEIGHT
+    #     )
+    # )
 
     #per quando metto le animazioni
     
-    #draw_animation(
-    #    render_surface, 
-    #    "player_idle", 
-    #    (
-    #        RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0],
-    #        RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1]
-    #    )
-    #)
+    draw_animation(
+       render_surface, 
+       player.CURRENT_ANIM_ID,
+       (
+            RENDER_WIDTH / 2 - PLAYER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+            RENDER_HEIGHT / 2 - PLAYER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1],
+       ),
+       True if player.SIDE == 1 else False
+    )
 
     # draw player gun
 
@@ -458,6 +483,20 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     draw_gun(render_surface, "deagle", gun_pivot_world, mouse_render, camera_x, camera_y)
 
     for tile in tiles_over_player:
+        tile_pos = tile[0], tile[1]
+        tile_size = (tile[2], tile[3])
+
+        tile_rendering_pos = (
+            tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
+            tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
+        )
+
+        if tile_rendering_pos[0] > RENDER_WIDTH or tile_rendering_pos[0] + tile_size[0] < 0:
+            continue
+
+        if tile_rendering_pos[1] > RENDER_HEIGHT or tile_rendering_pos[1] + tile_size[1] < 0:
+            continue
+
         draw_tile(tile, camera_x, camera_y)
     
     draw_tiles_buffer(render_surface)

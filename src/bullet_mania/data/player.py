@@ -2,6 +2,7 @@ POSITION = [0.0, 0.0]
 VELOCITY = [0.0, 0.0]
 
 SIDE = 1
+CURRENT_ANIM_ID = "player_idle"
 
 MAG_SIZE = 8
 MAG_AMMO = 8

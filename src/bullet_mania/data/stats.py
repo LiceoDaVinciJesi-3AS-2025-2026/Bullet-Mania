@@ -1,0 +1,3 @@
+KILL = 0
+SESSION_TIME = 0.0
+HORDES = 0

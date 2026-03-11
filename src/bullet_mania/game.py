@@ -24,6 +24,7 @@ import bullet_mania.data.player as player
 import bullet_mania.data.world as world
 import bullet_mania.data.vfx as vfx
 import bullet_mania.data.assets as assets
+import bullet_mania.wavesManager as wavesManager
 
 WIDTH, HEIGHT = WINDOW_SIZE
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
@@ -99,10 +100,10 @@ def run():
 
     build_ai_tiles_grid()
 
-    for x in range(20):
-        bot_pos = [ 100 * random.random() + random.randint(1, 500), 100 * random.random() + random.randint(1, 500) ]
+    # for x in range(20):
+    #     bot_pos = [ 100 * random.random() + random.randint(1, 500), 100 * random.random() + random.randint(1, 500) ]
 
-        add_bot(bot_pos)
+    #     add_bot(bot_pos)
 
     if len(world.TILES) > 1:
         FIRST_LAYER_ENABLED = True
@@ -345,6 +346,8 @@ def update(delta_time: float):
             vfx.BULLET_HOLES.remove(bullet_hole)
     
     update_bots(delta_time)
+
+    wavesManager.check_wave_end()
 
     mouse_screen = pygame.mouse.get_pos()
 

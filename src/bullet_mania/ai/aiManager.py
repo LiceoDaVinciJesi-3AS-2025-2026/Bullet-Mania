@@ -15,6 +15,8 @@ import math
 
 from bullet_mania.config.gameConfig import *
 
+from bullet_mania.statsManager import bot_killed
+
 import bullet_mania.data.player as player
 import bullet_mania.data.vfx as vfx
 
@@ -173,11 +175,11 @@ def move_towards_player(bot, delta_time):
     follow_path(bot, delta_time)
 
 def state_idle(bot, dist):
-    if dist <= 150:
+    if dist <= 250:
         bot[1] = CHASE
 
 def state_chase(bot, delta_time, dist):
-    if dist >= 250:
+    if dist >= 350:
         bot[1] = IDLE
         return
 
@@ -215,6 +217,7 @@ def update_bots(delta_time):
     for bot in bots[:]:
         if bot[3] <= 0:
             bots.remove(bot)
+            bot_killed()
             continue
 
         dist = distance(bot[0], player.POSITION)

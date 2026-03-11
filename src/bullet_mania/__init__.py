@@ -19,3 +19,6 @@ def main() -> None:
         pass
     elif run_mode == 3:
         run_editor()
+
+if __name__ == "__main__":
+    main()

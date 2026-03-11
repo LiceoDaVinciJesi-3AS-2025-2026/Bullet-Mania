@@ -289,120 +289,117 @@ def update(delta_time: float):
                     else:
                         player.POSITION[1] += intersection.height
     
-    # update animations
-    update_all(delta_time)
-    
-    if velocity.length() > 0:
-        if not is_playing("player_walk"):
-            play_animation("player_walk")
-        player.CURRENT_ANIM_ID = "player_walk"
-    else:
-        stop_animation("player_walk")
-        if not is_playing("player_idle"):
-            play_animation("player_idle")
-        player.CURRENT_ANIM_ID = "player_idle"
-    
-    if player.IS_DASHING:
-        if player.CURRENT_ANIM_ID != "player_dash":
-            stop_animation(player.CURRENT_ANIM_ID)
-            player.CURRENT_ANIM_ID = "player_dash"
-            play_animation("player_dash")
-    else:
         if velocity.length() > 0:
-            if player.CURRENT_ANIM_ID != "player_walk":
-                stop_animation(player.CURRENT_ANIM_ID)
-                player.CURRENT_ANIM_ID = "player_walk"
+            if not is_playing("player_walk"):
                 play_animation("player_walk")
+            player.CURRENT_ANIM_ID = "player_walk"
         else:
-            if player.CURRENT_ANIM_ID != "player_idle":
-                stop_animation(player.CURRENT_ANIM_ID)
-                player.CURRENT_ANIM_ID = "player_idle"
+            stop_animation("player_walk")
+            if not is_playing("player_idle"):
                 play_animation("player_idle")
+            player.CURRENT_ANIM_ID = "player_idle"
+        
+        if player.IS_DASHING:
+            if player.CURRENT_ANIM_ID != "player_dash":
+                stop_animation(player.CURRENT_ANIM_ID)
+                player.CURRENT_ANIM_ID = "player_dash"
+                play_animation("player_dash")
+        else:
+            if velocity.length() > 0:
+                if player.CURRENT_ANIM_ID != "player_walk":
+                    stop_animation(player.CURRENT_ANIM_ID)
+                    player.CURRENT_ANIM_ID = "player_walk"
+                    play_animation("player_walk")
+            else:
+                if player.CURRENT_ANIM_ID != "player_idle":
+                    stop_animation(player.CURRENT_ANIM_ID)
+                    player.CURRENT_ANIM_ID = "player_idle"
+                    play_animation("player_idle")
 
-    
-    # update reloading logic
-    if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
-        reload()
+        
+        # update reloading logic
+        if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
+            reload()
 
-        if player.IS_RELOADING:
-            player.LAST_RELOAD_TIME += delta_time
+            if player.IS_RELOADING:
+                player.LAST_RELOAD_TIME += delta_time
 
-        # update bullets
-        for bullet in world.BULLETS[:]:
-            should_destroy = False
+            # update bullets
+            for bullet in world.BULLETS[:]:
+                should_destroy = False
 
-            bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
+                bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
 
-            if FIRST_LAYER_ENABLED:
-                for tile in world.TILES[1]:
-                    tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
+                if FIRST_LAYER_ENABLED:
+                    for tile in world.TILES[1]:
+                        tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
 
-                    if tile_rect.colliderect(bullet_rect):
-                        place_bullet_hole((tile[0] + random.randint(4, 12), tile[1] + random.randint(4, 12)))
+                        if tile_rect.colliderect(bullet_rect):
+                            place_bullet_hole((tile[0] + random.randint(4, 12), tile[1] + random.randint(4, 12)))
 
+                            should_destroy = True
+                            break
+
+                if player_rect.colliderect(bullet_rect) and bullet[4] != "local" and not player.IS_DASHING:
+                    player.LIVES -= 1
+
+                    should_destroy = True
+                
+                for bot in bots:
+                    bot_pos = bot[0]
+
+                    # player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+                    # player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+                    
+                    bot_rect = pygame.Rect(
+                        bot_pos[0] + (BOT_WIDTH - BOT_HITBOX_WIDTH) // 2,
+                        bot_pos[1] + (BOT_HEIGHT - BOT_HITBOX_HEIGHT) // 2,
+                        BOT_HITBOX_WIDTH,
+                        BOT_HITBOX_HEIGHT
+                    )
+
+                    if bot_rect.colliderect(bullet_rect) and not bullet[4].startswith("_bot"):
+                        bot[3] -= 35
                         should_destroy = True
+
                         break
 
-            if player_rect.colliderect(bullet_rect) and bullet[4] != "local" and not player.IS_DASHING:
-                player.LIVES -= 1
+                if bullet[3] <= 0 or should_destroy:
+                    world.BULLETS.remove(bullet)
+                    continue
 
-                should_destroy = True
+                direction = bullet[1]
+                velocity = bullet[2]
+
+                bullet[0][0] += direction[0] * velocity * delta_time
+                bullet[0][1] += direction[1] * velocity * delta_time
+
+                bullet[3] -= delta_time
             
-            for bot in bots:
-                bot_pos = bot[0]
+            for bullet_hole in vfx.BULLET_HOLES:
+                bullet_hole[1] += delta_time
+                if bullet_hole[1] >= vfx.BULLET_HOLE_DURATION:
+                    vfx.BULLET_HOLES.remove(bullet_hole)
+            
+            update_bots(delta_time)
 
-                # player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
-                # player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
-                
-                bot_rect = pygame.Rect(
-                    bot_pos[0] + (BOT_WIDTH - BOT_HITBOX_WIDTH) // 2,
-                    bot_pos[1] + (BOT_HEIGHT - BOT_HITBOX_HEIGHT) // 2,
-                    BOT_HITBOX_WIDTH,
-                    BOT_HITBOX_HEIGHT
-                )
+            wavesManager.check_wave_end()
 
-                if bot_rect.colliderect(bullet_rect) and not bullet[4].startswith("_bot"):
-                    bot[3] -= 35
-                    should_destroy = True
+            if player.LIVES <= 0:
+                CURRENT_STATE = STATE_MENU
 
-                    break
+                player.POSITION = [50, 50]
+                player.LIVES = 6
+                player.AMMO = 350
+                player.MAG_AMMO = player.MAG_SIZE
+                player.VELOCITY = [0.0, 0.0]
 
-            if bullet[3] <= 0 or should_destroy:
-                world.BULLETS.remove(bullet)
-                continue
+                delete_bots()
 
-            direction = bullet[1]
-            velocity = bullet[2]
+                world.CURRENT_HORDE = 0
+                wavesManager.spawn_wave()
 
-            bullet[0][0] += direction[0] * velocity * delta_time
-            bullet[0][1] += direction[1] * velocity * delta_time
-
-            bullet[3] -= delta_time
-        
-        for bullet_hole in vfx.BULLET_HOLES:
-            bullet_hole[1] += delta_time
-            if bullet_hole[1] >= vfx.BULLET_HOLE_DURATION:
-                vfx.BULLET_HOLES.remove(bullet_hole)
-        
-        update_bots(delta_time)
-
-        wavesManager.check_wave_end()
-
-        if player.LIVES <= 0:
-            CURRENT_STATE = STATE_MENU
-
-            player.POSITION = [50, 50]
-            player.LIVES = 6
-            player.AMMO = 350
-            player.MAG_AMMO = player.MAG_SIZE
-            player.VELOCITY = [0.0, 0.0]
-
-            delete_bots()
-
-            world.CURRENT_HORDE = 0
-            wavesManager.spawn_wave()
-
-            world.BULLETS = []
+                world.BULLETS = []
     
     # update animations
     update_all(delta_time)

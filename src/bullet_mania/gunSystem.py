@@ -40,8 +40,8 @@ def shoot(position, mouse_pos, owner_id="local", velocity=.3, lifetime=1500):
         player_center = pygame.Vector2(CURRENT_SHOOTING_ORIGIN)
         mouse_vec = pygame.Vector2(mouse_pos)
         mouse_vec = pygame.Vector2(
-            mouse_vec.x + random.randint(-5, 5),
-            mouse_vec.y + random.randint(-5, 5),
+            mouse_vec.x + random.randint(-15, 15),
+            mouse_vec.y + random.randint(-15, 15),
         )
 
         direction = mouse_vec - player_center

@@ -9,7 +9,7 @@ MAG_AMMO = 8
 AMMO = 350
 MAX_AMMO = 350
 
-LIVES = 3
+LIVES = 6
 
 IS_DEAD = False
 

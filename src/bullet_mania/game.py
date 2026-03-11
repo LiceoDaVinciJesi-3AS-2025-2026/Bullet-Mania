@@ -18,7 +18,7 @@ from bullet_mania.animationsManager import *
 from bullet_mania.spritesManager import load_spritesheet
 
 from bullet_mania.ai.aiTilesHandler import build_ai_tiles_grid
-from bullet_mania.ai.aiManager import draw_bots, update_bots, add_bot, bots
+from bullet_mania.ai.aiManager import draw_bots, update_bots, bots, delete_bots
 
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
@@ -36,6 +36,11 @@ PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT = CHARACTER_HITBOX_SIZE
 
 FIRST_LAYER_ENABLED = False
+
+CURRENT_STATE = 0
+
+STATE_PLAYING = 1
+STATE_MENU = 0
 
 running = False
 
@@ -154,7 +159,7 @@ def run():
         pygame.display.set_caption(f"Bullet Mania - FPS: {clock.get_fps():.2f}")
 
 def input():
-    global running
+    global running, CURRENT_STATE
 
     camera_x = player.POSITION[0] - RENDER_WIDTH / 2 + PLAYER_WIDTH / 2
     camera_y = player.POSITION[1] - RENDER_HEIGHT / 2 + PLAYER_HEIGHT / 2
@@ -184,39 +189,48 @@ def input():
             if event.key == pygame.K_ESCAPE:
                 running = False
 
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN and CURRENT_STATE == STATE_PLAYING:
             if event.button == 1: # left click
                 player_center_screen = (player.POSITION[0] + PLAYER_WIDTH / 2 + PLAYER_WIDTH, player.POSITION[1] + PLAYER_HEIGHT / 2)
 
                 shoot(player_center_screen, mouse_world)
+        
+        if event.type == pygame.MOUSEBUTTONDOWN and CURRENT_STATE == STATE_MENU:
+            if event.button == 1: # left click
+                if exit_rect.collidepoint(mouse_screen):
+                    running = False
+                
+                if play_rect.collidepoint(mouse_screen):
+                    CURRENT_STATE = STATE_PLAYING
 
         keys = pygame.key.get_pressed()
 
-        if player.IS_DASHING:
-            player.VELOCITY[0] = player.DASH_DIRECTION[0]
-            player.VELOCITY[1] = player.DASH_DIRECTION[1]
-        else:
-            # reset player speed
-            player.VELOCITY = [0, 0]
+        if CURRENT_STATE == STATE_PLAYING:
+            if player.IS_DASHING:
+                player.VELOCITY[0] = player.DASH_DIRECTION[0]
+                player.VELOCITY[1] = player.DASH_DIRECTION[1]
+            else:
+                # reset player speed
+                player.VELOCITY = [0, 0]
 
-            # movement on X axis (left/right)
-            if keys[pygame.K_a]:
-                player.VELOCITY[0] = -1
-            if keys[pygame.K_d]:
-                player.VELOCITY[0] = 1
+                # movement on X axis (left/right)
+                if keys[pygame.K_a]:
+                    player.VELOCITY[0] = -1
+                if keys[pygame.K_d]:
+                    player.VELOCITY[0] = 1
 
-            # movement on Y axis (up/down)
-            if keys[pygame.K_w]:
-                player.VELOCITY[1] = -1
-            if keys[pygame.K_s]:
-                player.VELOCITY[1] = 1
+                # movement on Y axis (up/down)
+                if keys[pygame.K_w]:
+                    player.VELOCITY[1] = -1
+                if keys[pygame.K_s]:
+                    player.VELOCITY[1] = 1
 
         # reloading
-        if keys[pygame.K_r]:
+        if keys[pygame.K_r] and CURRENT_STATE == STATE_PLAYING:
             start_reload()
 
         # dash
-        if keys[pygame.K_LSHIFT]:
+        if keys[pygame.K_LSHIFT] and CURRENT_STATE == STATE_PLAYING:
             if not player.IS_DASHING and player.DASH_COOLDOWN_TIMER <= 0 and (player.VELOCITY[0] != 0 or player.VELOCITY[1] != 0):
                 # preserve the direction
                 player.DASH_DIRECTION[0] = player.VELOCITY[0]
@@ -226,154 +240,170 @@ def input():
                 player.DASH_COOLDOWN_TIMER = player.DASH_COOLDOWN
 
 def update(delta_time: float):
-    global FIRST_LAYER_ENABLED
+    global FIRST_LAYER_ENABLED, CURRENT_STATE, bots
 
     # update player position with dashing
-    if player.DASH_COOLDOWN_TIMER > 0:
-        player.DASH_COOLDOWN_TIMER = max(0, player.DASH_COOLDOWN_TIMER - delta_time)
+    if CURRENT_STATE == STATE_PLAYING:
+        if player.DASH_COOLDOWN_TIMER > 0:
+            player.DASH_COOLDOWN_TIMER = max(0, player.DASH_COOLDOWN_TIMER - delta_time)
 
-    if player.IS_DASHING:
-        player.DASH_TIME += delta_time
-        if player.DASH_TIME >= player.DASH_DURATION:
-            player.IS_DASHING = False
-            player.DASH_TIME = 0
+        if player.IS_DASHING:
+            player.DASH_TIME += delta_time
+            if player.DASH_TIME >= player.DASH_DURATION:
+                player.IS_DASHING = False
+                player.DASH_TIME = 0
 
-    if player.IS_DASHING:
-        speed_multiplier = player.DASH_MULTIPLIER
-    else:
-        speed_multiplier = 1
-
-    velocity = pygame.Vector2(player.VELOCITY)
-    if velocity.length() > 0:
-        velocity = velocity.normalize()
-
-    player.POSITION[0] += velocity[0] * CHARACTER_SPEED * speed_multiplier * delta_time
-    player.POSITION[1] += velocity[1] * CHARACTER_SPEED * speed_multiplier * delta_time
-
-    player_rect = pygame.Rect(
-        player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
-        player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
-        PLAYER_HITBOX_WIDTH,
-        PLAYER_HITBOX_HEIGHT
-    )
-
-    # collision with tiles
-    if FIRST_LAYER_ENABLED:
-        for tile in world.TILES[1]:
-            tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
-
-            if tile_rect.colliderect(player_rect):
-                intersection = tile_rect.clip(player_rect)
-
-                if intersection.width < intersection.height:
-                    if player.POSITION[0] < tile_rect.x:
-                        player.POSITION[0] -= intersection.width
-                    else:
-                        player.POSITION[0] += intersection.width
-                else:
-                    if player.POSITION[1] < tile_rect.y:
-                        player.POSITION[1] -= intersection.height
-                    else:
-                        player.POSITION[1] += intersection.height
-    
-    # update animations
-    update_all(delta_time)
-    
-    if velocity.length() > 0:
-        if not is_playing("player_walk"):
-            play_animation("player_walk")
-        player.CURRENT_ANIM_ID = "player_walk"
-    else:
-        stop_animation("player_walk")
-        if not is_playing("player_idle"):
-            play_animation("player_idle")
-        player.CURRENT_ANIM_ID = "player_idle"
-    
-    if player.IS_DASHING:
-        if player.CURRENT_ANIM_ID != "player_dash":
-            stop_animation(player.CURRENT_ANIM_ID)
-            player.CURRENT_ANIM_ID = "player_dash"
-            play_animation("player_dash")
-    else:
-        if velocity.length() > 0:
-            if player.CURRENT_ANIM_ID != "player_walk":
-                stop_animation(player.CURRENT_ANIM_ID)
-                player.CURRENT_ANIM_ID = "player_walk"
-                play_animation("player_walk")
+        if player.IS_DASHING:
+            speed_multiplier = player.DASH_MULTIPLIER
         else:
-            if player.CURRENT_ANIM_ID != "player_idle":
-                stop_animation(player.CURRENT_ANIM_ID)
-                player.CURRENT_ANIM_ID = "player_idle"
-                play_animation("player_idle")
+            speed_multiplier = 1
 
-    
-    # update reloading logic
-    if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
-        reload()
+        velocity = pygame.Vector2(player.VELOCITY)
+        if velocity.length() > 0:
+            velocity = velocity.normalize()
 
-    if player.IS_RELOADING:
-        player.LAST_RELOAD_TIME += delta_time
+        player.POSITION[0] += velocity[0] * CHARACTER_SPEED * speed_multiplier * delta_time
+        player.POSITION[1] += velocity[1] * CHARACTER_SPEED * speed_multiplier * delta_time
 
-    # update bullets
-    for bullet in world.BULLETS[:]:
-        should_destroy = False
+        player_rect = pygame.Rect(
+            player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+            player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+            PLAYER_HITBOX_WIDTH,
+            PLAYER_HITBOX_HEIGHT
+        )
 
-        bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
-
+        # collision with tiles
         if FIRST_LAYER_ENABLED:
             for tile in world.TILES[1]:
                 tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
 
-                if tile_rect.colliderect(bullet_rect):
-                    place_bullet_hole((tile[0] + random.randint(4, 12), tile[1] + random.randint(4, 12)))
+                if tile_rect.colliderect(player_rect):
+                    intersection = tile_rect.clip(player_rect)
 
+                    if intersection.width < intersection.height:
+                        if player.POSITION[0] < tile_rect.x:
+                            player.POSITION[0] -= intersection.width
+                        else:
+                            player.POSITION[0] += intersection.width
+                    else:
+                        if player.POSITION[1] < tile_rect.y:
+                            player.POSITION[1] -= intersection.height
+                        else:
+                            player.POSITION[1] += intersection.height
+        
+        if velocity.length() > 0:
+            if not is_playing("player_walk"):
+                play_animation("player_walk")
+            player.CURRENT_ANIM_ID = "player_walk"
+        else:
+            stop_animation("player_walk")
+            if not is_playing("player_idle"):
+                play_animation("player_idle")
+            player.CURRENT_ANIM_ID = "player_idle"
+        
+        if player.IS_DASHING:
+            if player.CURRENT_ANIM_ID != "player_dash":
+                stop_animation(player.CURRENT_ANIM_ID)
+                player.CURRENT_ANIM_ID = "player_dash"
+                play_animation("player_dash")
+        else:
+            if velocity.length() > 0:
+                if player.CURRENT_ANIM_ID != "player_walk":
+                    stop_animation(player.CURRENT_ANIM_ID)
+                    player.CURRENT_ANIM_ID = "player_walk"
+                    play_animation("player_walk")
+            else:
+                if player.CURRENT_ANIM_ID != "player_idle":
+                    stop_animation(player.CURRENT_ANIM_ID)
+                    player.CURRENT_ANIM_ID = "player_idle"
+                    play_animation("player_idle")
+
+        # update reloading logic
+        if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:
+            reload()
+
+        if player.IS_RELOADING:
+            player.LAST_RELOAD_TIME += delta_time
+
+        # update bullets
+        for bullet in world.BULLETS[:]:
+            should_destroy = False
+
+            bullet_rect = pygame.Rect(bullet[0][0], bullet[0][1], 4, 4)
+
+            if FIRST_LAYER_ENABLED:
+                for tile in world.TILES[1]:
+                    tile_rect = pygame.Rect(tile[0], tile[1], tile[2], tile[3])
+
+                    if tile_rect.colliderect(bullet_rect):
+                        place_bullet_hole((tile[0] + random.randint(4, 12), tile[1] + random.randint(4, 12)))
+
+                        should_destroy = True
+                        break
+
+            if player_rect.colliderect(bullet_rect) and bullet[4] != "local" and not player.IS_DASHING:
+                player.LIVES -= 1
+
+                should_destroy = True
+            
+            for bot in bots:
+                bot_pos = bot[0]
+
+                # player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
+                # player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
+                
+                bot_rect = pygame.Rect(
+                    bot_pos[0] + (BOT_WIDTH - BOT_HITBOX_WIDTH) // 2,
+                    bot_pos[1] + (BOT_HEIGHT - BOT_HITBOX_HEIGHT) // 2,
+                    BOT_HITBOX_WIDTH,
+                    BOT_HITBOX_HEIGHT
+                )
+
+                if bot_rect.colliderect(bullet_rect) and not bullet[4].startswith("_bot"):
+                    bot[3] -= 35
                     should_destroy = True
+
                     break
 
-        if player_rect.colliderect(bullet_rect) and bullet[4] != "local" and not player.IS_DASHING:
-            player.LIVES -= 1
+            if bullet[3] <= 0 or should_destroy:
+                world.BULLETS.remove(bullet)
+                continue
 
-            should_destroy = True
+            direction = bullet[1]
+            velocity = bullet[2]
+
+            bullet[0][0] += direction[0] * velocity * delta_time
+            bullet[0][1] += direction[1] * velocity * delta_time
+
+            bullet[3] -= delta_time
         
-        for bot in bots:
-            bot_pos = bot[0]
+        for bullet_hole in vfx.BULLET_HOLES:
+            bullet_hole[1] += delta_time
+            if bullet_hole[1] >= vfx.BULLET_HOLE_DURATION:
+                vfx.BULLET_HOLES.remove(bullet_hole)
+        
+        update_bots(delta_time)
 
-            # player.POSITION[0] + (PLAYER_WIDTH - PLAYER_HITBOX_WIDTH) // 2,
-            # player.POSITION[1] + PLAYER_HEIGHT - PLAYER_HITBOX_HEIGHT,
-            
-            bot_rect = pygame.Rect(
-                bot_pos[0] + (BOT_WIDTH - BOT_HITBOX_WIDTH) // 2,
-                bot_pos[1] + (BOT_HEIGHT - BOT_HITBOX_HEIGHT) // 2,
-                BOT_HITBOX_WIDTH,
-                BOT_HITBOX_HEIGHT
-            )
+        wavesManager.check_wave_end()
 
-            if bot_rect.colliderect(bullet_rect) and not bullet[4].startswith("_bot"):
-                bot[3] -= 35
-                should_destroy = True
+        if player.LIVES <= 0:
+            CURRENT_STATE = STATE_MENU
 
-                break
+            player.POSITION = [50, 50]
+            player.LIVES = 6
+            player.AMMO = 350
+            player.MAG_AMMO = player.MAG_SIZE
+            player.VELOCITY = [0.0, 0.0]
 
-        if bullet[3] <= 0 or should_destroy:
-            world.BULLETS.remove(bullet)
-            continue
+            delete_bots()
 
-        direction = bullet[1]
-        velocity = bullet[2]
+            world.CURRENT_HORDE = 0
+            wavesManager.spawn_wave()
 
-        bullet[0][0] += direction[0] * velocity * delta_time
-        bullet[0][1] += direction[1] * velocity * delta_time
-
-        bullet[3] -= delta_time
+            world.BULLETS = []
     
-    for bullet_hole in vfx.BULLET_HOLES:
-        bullet_hole[1] += delta_time
-        if bullet_hole[1] >= vfx.BULLET_HOLE_DURATION:
-            vfx.BULLET_HOLES.remove(bullet_hole)
-    
-    update_bots(delta_time)
-
-    wavesManager.check_wave_end()
+    # update animations
+    update_all(delta_time)
 
     mouse_screen = pygame.mouse.get_pos()
 
@@ -565,6 +595,9 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
     elif player.IS_RELOADING:
         progress = player.LAST_RELOAD_TIME / player.RELOAD_COOLDOWN
         draw_reloading_text(screen, progress)
+
+    if CURRENT_STATE == STATE_MENU:
+        render_menu_ui(screen)
 
     mouse_pos = pygame.mouse.get_pos()
     screen.blit(pygame.transform.scale_by(assets.ASSETS["cursor"], render_scale), (mouse_pos[0] - 4*render_scale[0], mouse_pos[1] - 4*render_scale[0]))

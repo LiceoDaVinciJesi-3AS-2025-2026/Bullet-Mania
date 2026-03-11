@@ -12,8 +12,20 @@ PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 
 scale = WINDOW_SIZE[0] / RENDER_SIZE[0]
 
+TitleFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 55)
+BodyFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 35)
+
 TextFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 25)
 NumberFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 35)
+
+title = TitleFont.render("BULLET MANIA", True, "white")
+title_rect = pygame.Rect((WINDOW_WIDTH - title.get_width())//2, (WINDOW_HEIGHT//5 - title.get_height()), title.get_width(), title.get_height())
+
+play = BodyFont.render("NEW SESSION", True, "white")
+play_rect = pygame.Rect((WINDOW_WIDTH - play.get_width())//2, (WINDOW_HEIGHT//1.2 - play.get_height()), play.get_width(), play.get_height())
+
+exit = BodyFont.render("EXIT", True, "white")
+exit_rect = pygame.Rect((WINDOW_WIDTH - exit.get_width())//2, (WINDOW_HEIGHT//1.2 - exit.get_height() + 50), exit.get_width(), exit.get_height())
 
 heart_image = None
 bullet_image = None
@@ -22,6 +34,16 @@ reloading_progress_bar_image = None
 reloading_progress_tick_image = None
 
 time = 0
+
+def blur_surface(surface, passes=3, amount=4):
+    surf = surface.copy()
+
+    for _ in range(passes):
+        w, h = surf.get_size()
+        surf = pygame.transform.smoothscale(surf, (w // amount, h // amount))
+        surf = pygame.transform.smoothscale(surf, (w, h))
+
+    return surf
 
 def draw_lives(screen: pygame.Surface):
     global heart_image
@@ -77,3 +99,16 @@ def render_ui(screen: pygame.Surface):
     screen.blit(ammo, (WINDOW_WIDTH - ammo.get_width() - 75, WINDOW_HEIGHT - ammo.get_height() - 5))
     draw_lives(screen)
     draw_mag(screen)
+
+def render_menu_ui(screen: pygame.Surface):
+    blurred_screen = blur_surface(screen)
+    screen.blit(blurred_screen, (0, 0))
+
+    dark_overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+    dark_overlay.fill((100, 100, 100))
+
+    screen.blit(dark_overlay, (0, 0), special_flags=pygame.BLEND_RGB_MULT)
+
+    screen.blit(title, title_rect)
+    screen.blit(play, play_rect)
+    screen.blit(exit, exit_rect)

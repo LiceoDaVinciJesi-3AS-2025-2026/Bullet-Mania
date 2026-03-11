@@ -242,3 +242,7 @@ def draw_bots(render_surface: pygame.Surface, camera_x: float, camera_y: float):
 
         pygame.draw.rect(render_surface, (255, 0, 0), (bot_rendering_pos[0], bot_rendering_pos[1], 20, 20))
         # render_surface.blit(tile_image, tile_rendering_pos)
+
+def delete_bots():
+    for bot in bots[:]:
+        bots.remove(bot)

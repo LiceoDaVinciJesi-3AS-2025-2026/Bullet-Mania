@@ -21,7 +21,6 @@ def spawn_wave():
 
     world.CURRENT_HORDE += 1
 
-
 def check_wave_end():
     if len(aiManager.bots) == 0:
         statsManager.next_horde()

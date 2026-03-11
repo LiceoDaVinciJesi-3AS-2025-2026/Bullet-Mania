@@ -34,6 +34,8 @@ CURRENT_SHOOTING_ORIGIN = [0.0, 0.0]
 def shoot(position, mouse_pos, owner_id="local", velocity=.3, lifetime=1500):
     global CURRENT_SHOOTING_ORIGIN
 
+    if player.IS_DASHING:
+        return
     if player.MAG_AMMO > 0 and player.IS_RELOADING == False:
         player.MAG_AMMO -= 1
 

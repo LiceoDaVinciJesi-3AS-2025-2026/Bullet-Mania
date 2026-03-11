@@ -138,17 +138,15 @@ def run():
         play_animation("player_idle")
         
     if "player_dash" in assets.SPRITES_ANIMATIONS:
-        register_animation("player_dash", assets.SPRITES_ANIMATIONS["player_dash"], 100, loop=False)
+        register_animation("player_dash", assets.SPRITES_ANIMATIONS["player_dash"], 100, loop=True)
         
 
     while running:
-        delta_time = clock.get_time()
+        delta_time = clock.tick(FPS)
 
         input()
         update(delta_time)
         render(render_surface, screen)
-
-        clock.tick(FPS)
 
         pygame.display.flip()
         pygame.display.set_caption(f"Bullet Mania - FPS: {clock.get_fps():.2f}")
@@ -185,7 +183,7 @@ def input():
                 running = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1: # left click
+            if event.button == 1 and not player.IS_DASHING: # left click
                 player_center_screen = (player.POSITION[0] + PLAYER_WIDTH / 2 + PLAYER_WIDTH, player.POSITION[1] + PLAYER_HEIGHT / 2)
 
                 shoot(player_center_screen, mouse_world)
@@ -276,25 +274,17 @@ def update(delta_time: float):
                     else:
                         player.POSITION[1] += intersection.height
     
-    # update animations
+    # update animations first (delta_time in ms makes frame_duration valid)
     update_all(delta_time)
-    
-    if velocity.length() > 0:
-        if not is_playing("player_walk"):
-            play_animation("player_walk")
-        player.CURRENT_ANIM_ID = "player_walk"
-    else:
-        stop_animation("player_walk")
-        if not is_playing("player_idle"):
-            play_animation("player_idle")
-        player.CURRENT_ANIM_ID = "player_idle"
-    
+
+    # dash overrides the regular walk/idle state; evaluate it early
     if player.IS_DASHING:
         if player.CURRENT_ANIM_ID != "player_dash":
             stop_animation(player.CURRENT_ANIM_ID)
             player.CURRENT_ANIM_ID = "player_dash"
             play_animation("player_dash")
     else:
+        # choose walk or idle when not dashing
         if velocity.length() > 0:
             if player.CURRENT_ANIM_ID != "player_walk":
                 stop_animation(player.CURRENT_ANIM_ID)
@@ -305,7 +295,6 @@ def update(delta_time: float):
                 stop_animation(player.CURRENT_ANIM_ID)
                 player.CURRENT_ANIM_ID = "player_idle"
                 play_animation("player_idle")
-
     
     # update reloading logic
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:

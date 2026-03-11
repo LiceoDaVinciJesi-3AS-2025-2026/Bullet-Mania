@@ -90,8 +90,8 @@ def run():
         ]
     ]
 
-    for x in range(MAP_WIDTH):
-        for y in range(MAP_HEIGHT):
+    for x in range(-(MAP_WIDTH//2), MAP_WIDTH, 1):
+        for y in range(-(MAP_HEIGHT//2), MAP_HEIGHT, 1):
             tiles_data_test[0].append([16*x, 16*y, 16, 16, "floor"])
 
     load_tiles_assets()

@@ -27,8 +27,8 @@ def shoot_to_player(bot, velocity=.2, lifetime=1500):
 
     player_center = pygame.Vector2(player.POSITION)
     player_center = pygame.Vector2(
-        player_center.x + random.randint(-5, 5),
-        player_center.y + random.randint(-5, 5),
+        player_center.x + random.randint(-15, 15),
+        player_center.y + random.randint(-15, 15),
     )
 
     direction = player_center - bot_center

@@ -84,16 +84,19 @@ def run():
 
     tiles_data_test = [
         [],
-        [
-            [-16, 0, 16, 16, "wall"], [0, 0, 16, 16, "wall"], [16, 0, 16, 16, "wall"], [32, 0, 16, 16, "wall"], [48, 0, 16, 16, "wall"], [64, 0, 16, 16, "wall"], [80, 0, 16, 16, "wall"],
-            [-16, 16, 16, 16, "wall"], [80, 16, 16, 16, "wall"],
-            [-16, 32, 16, 16, "wall"], [80, 32, 16, 16, "wall"]
-        ]
+        []
     ]
 
-    for x in range(-(MAP_WIDTH//2), MAP_WIDTH, 1):
-        for y in range(-(MAP_HEIGHT//2), MAP_HEIGHT, 1):
+    for x in range(1, MAP_WIDTH-1):
+        for y in range(1, MAP_HEIGHT-1):
             tiles_data_test[0].append([16*x, 16*y, 16, 16, "floor"])
+
+    for x in range(MAP_WIDTH):
+        for y in range(MAP_HEIGHT):
+            if y == 0 or x == 0 or x == MAP_WIDTH-1 or y == MAP_HEIGHT-1:
+                tiles_data_test[1].append([16*x, 16*y, 16, 16, "wall"])
+
+    player.POSITION = [50, 50]
 
     load_tiles_assets()
     load_tiles(tiles_data_test, world.TILES)

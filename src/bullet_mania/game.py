@@ -127,7 +127,8 @@ def run():
 
     load_spritesheet("player_idle", pygame.image.load("src/bullet_mania/assets/sprites/animations/idle.png"), 24, 24, 0, 4)
     load_spritesheet("player_walk", pygame.image.load("src/bullet_mania/assets/sprites/animations/run.png"), 24, 24, 0, 4)
-
+    load_spritesheet("player_dash", pygame.image.load("src/bullet_mania/assets/sprites/animations/dash.png"), 24, 24, 0, 4)
+    
     if "player_walk" in assets.SPRITES_ANIMATIONS:
         register_animation("player_walk", assets.SPRITES_ANIMATIONS["player_walk"], 100, loop=True)
         play_animation("player_walk")
@@ -135,6 +136,10 @@ def run():
     if "player_idle" in assets.SPRITES_ANIMATIONS:
         register_animation("player_idle", assets.SPRITES_ANIMATIONS["player_idle"], 100, loop=True)
         play_animation("player_idle")
+        
+    if "player_dash" in assets.SPRITES_ANIMATIONS:
+        register_animation("player_dash", assets.SPRITES_ANIMATIONS["player_dash"], 100, loop=False)
+        
 
     while running:
         delta_time = clock.get_time()
@@ -283,6 +288,24 @@ def update(delta_time: float):
         if not is_playing("player_idle"):
             play_animation("player_idle")
         player.CURRENT_ANIM_ID = "player_idle"
+    
+    if player.IS_DASHING:
+        if player.CURRENT_ANIM_ID != "player_dash":
+            stop_animation(player.CURRENT_ANIM_ID)
+            player.CURRENT_ANIM_ID = "player_dash"
+            play_animation("player_dash")
+    else:
+        if velocity.length() > 0:
+            if player.CURRENT_ANIM_ID != "player_walk":
+                stop_animation(player.CURRENT_ANIM_ID)
+                player.CURRENT_ANIM_ID = "player_walk"
+                play_animation("player_walk")
+        else:
+            if player.CURRENT_ANIM_ID != "player_idle":
+                stop_animation(player.CURRENT_ANIM_ID)
+                player.CURRENT_ANIM_ID = "player_idle"
+                play_animation("player_idle")
+
     
     # update reloading logic
     if player.IS_RELOADING and player.LAST_RELOAD_TIME >= player.RELOAD_COOLDOWN:

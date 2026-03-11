@@ -288,16 +288,7 @@ def update(delta_time: float):
                         else:
                             player.POSITION[1] += intersection.height
     
-        if velocity.length() > 0:
-            if not is_playing("player_walk"):
-                play_animation("player_walk")
-            player.CURRENT_ANIM_ID = "player_walk"
-        else:
-            stop_animation("player_walk")
-            if not is_playing("player_idle"):
-                play_animation("player_idle")
-            player.CURRENT_ANIM_ID = "player_idle"
-        
+        # choose animation based on player state
         if player.IS_DASHING:
             if player.CURRENT_ANIM_ID != "player_dash":
                 stop_animation(player.CURRENT_ANIM_ID)
@@ -305,11 +296,13 @@ def update(delta_time: float):
                 play_animation("player_dash")
         else:
             if velocity.length() > 0:
+                # walking
                 if player.CURRENT_ANIM_ID != "player_walk":
                     stop_animation(player.CURRENT_ANIM_ID)
                     player.CURRENT_ANIM_ID = "player_walk"
                     play_animation("player_walk")
             else:
+                # idle
                 if player.CURRENT_ANIM_ID != "player_idle":
                     stop_animation(player.CURRENT_ANIM_ID)
                     player.CURRENT_ANIM_ID = "player_idle"

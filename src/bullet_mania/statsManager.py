@@ -8,3 +8,8 @@ def update_session_time(delta_time):
 
 def next_horde():
     stats.HORDES += 1
+
+def reset_stats():
+    stats.KILL = 0
+    stats.SESSION_TIME = 0.0
+    stats.HORDES = 1

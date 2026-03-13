@@ -20,6 +20,8 @@ from bullet_mania.spritesManager import load_spritesheet
 from bullet_mania.ai.aiTilesHandler import build_ai_tiles_grid
 from bullet_mania.ai.aiManager import draw_bots, update_bots, bots, delete_bots
 
+from bullet_mania.statsManager import update_session_time, reset_stats
+
 import bullet_mania.data.player as player
 import bullet_mania.data.world as world
 import bullet_mania.data.vfx as vfx
@@ -377,7 +379,10 @@ def update(delta_time: float):
 
         wavesManager.check_wave_end()
 
+        update_session_time(delta_time)
+
         if player.LIVES <= 0:
+            reset_stats()
             CURRENT_STATE = STATE_MENU
 
             player.POSITION = [50, 50]

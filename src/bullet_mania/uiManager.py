@@ -5,6 +5,7 @@ from bullet_mania.config.gameConfig import WINDOW_SIZE, RENDER_SIZE, CHARACTER_S
 import bullet_mania.data.assets as assets
 import bullet_mania.data.vfx as vfx
 import bullet_mania.data.player as player
+import bullet_mania.data.stats as stats
 
 WINDOW_WIDTH, WINDOW_HEIGHT = WINDOW_SIZE
 
@@ -94,11 +95,24 @@ def draw_reloading_text(screen: pygame.Surface, progress: float):
         progress_bar_position_y + reloading_progress_bar_image.get_height()/2 - tick_height/2 - 1
     ))
 
+def draw_stats(screen: pygame.Surface):
+    kills_text = TextFont.render(f"Kills: {stats.KILL}", True, "white")
+    screen.blit(kills_text, (20, 100))
+    
+    minutes = int(stats.SESSION_TIME // 60000)
+    seconds = int((stats.SESSION_TIME % 60000) // 1000)
+    time_text = TextFont.render(f"Time: {minutes:02d}:{seconds:02d}", True, "white")
+    screen.blit(time_text, (20, 130))
+    
+    hordes_text = TextFont.render(f"Hordes: {stats.HORDES}", True, "white")
+    screen.blit(hordes_text, (20, 160))
+
 def render_ui(screen: pygame.Surface):
     ammo = NumberFont.render(f"{player.AMMO}/{player.MAX_AMMO}", True, "white")
     screen.blit(ammo, (WINDOW_WIDTH - ammo.get_width() - 75, WINDOW_HEIGHT - ammo.get_height() - 5))
     draw_lives(screen)
     draw_mag(screen)
+    draw_stats(screen)
 
 def render_menu_ui(screen: pygame.Surface):
     blurred_screen = blur_surface(screen)

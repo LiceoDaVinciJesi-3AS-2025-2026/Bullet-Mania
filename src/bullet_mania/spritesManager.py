@@ -1,3 +1,11 @@
+# spritesManager.py - Load spritesheet given frames data.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import pygame
 
 import bullet_mania.data.assets as assets

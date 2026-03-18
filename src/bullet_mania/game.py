@@ -1,3 +1,11 @@
+# game.py - Game main loop, state machine.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import math
 import random
 
@@ -462,7 +470,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         if tile_rendering_pos[1] > RENDER_HEIGHT or tile_rendering_pos[1] + tile_size[1] < 0:
             continue
 
-        draw_tile(tile, camera_x, camera_y)
+        draw_tile(tile, tile_rendering_pos)
 
     draw_tiles_buffer(render_surface)
 
@@ -489,7 +497,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
                     tiles_over_player.append(tile[0])
                     continue
 
-                draw_tile(tile, camera_x, camera_y)
+                draw_tile(tile, tile_rendering_pos)
 
     draw_tiles_buffer(render_surface)
 
@@ -552,7 +560,7 @@ def render(render_surface: pygame.Surface, screen: pygame.Surface):
         if tile_rendering_pos[1] > RENDER_HEIGHT or tile_rendering_pos[1] + tile_size[1] < 0:
             continue
 
-        draw_tile(tile, camera_x, camera_y)
+        draw_tile(tile, tile_rendering_pos)
     
     draw_tiles_buffer(render_surface)
     

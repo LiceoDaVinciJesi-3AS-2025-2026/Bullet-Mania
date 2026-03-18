@@ -1,3 +1,11 @@
+# uiManager.py - Handle ui rendering.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import pygame
 
 from bullet_mania.config.gameConfig import WINDOW_SIZE, RENDER_SIZE, CHARACTER_SIZE

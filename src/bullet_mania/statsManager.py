@@ -1,3 +1,11 @@
+# statsManager.py - Handle current session stats.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import bullet_mania.data.stats as stats
 
 def bot_killed():

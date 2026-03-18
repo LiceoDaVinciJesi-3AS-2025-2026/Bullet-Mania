@@ -1,10 +1,17 @@
+# vfxManager.py - Handle vfx updating and rendering.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import pygame
+
 import bullet_mania.data.assets as assets
 
 vignette_image = None
 muzzle_fire_image = None
-
-import bullet_mania.data.assets as assets
 
 vignette_image = None
 muzzle_fire_image = None

@@ -1,8 +1,17 @@
+# tilesManager.py - Handle waves number and checking.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import random
 
 from bullet_mania.config.gameConfig import *
 
 import bullet_mania.data.world as world
+
 import bullet_mania.statsManager as statsManager
 
 import bullet_mania.ai.aiManager as aiManager

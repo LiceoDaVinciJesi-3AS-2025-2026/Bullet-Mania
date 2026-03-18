@@ -1,3 +1,11 @@
+# aiGunSystem.py - Handle AI-related guns functions.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import pygame
 import random
 

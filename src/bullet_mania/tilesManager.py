@@ -1,10 +1,18 @@
+# tilesManager.py - Handle tiles loading, map loading and tiles rendering.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import os
+
 import pygame
 
 from bullet_mania.config.gameConfig import *
 
 import bullet_mania.data.tiles as tiles
-import bullet_mania.data.vfx as vfx
 
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 
@@ -31,15 +39,8 @@ def load_tiles(tiles_data, tiles_list):
 
             tiles_list[-1].append((x, y, width, height, image))
 
-def draw_tile(tile: list, camera_x: float, camera_y: float, alpha: int = 255):
-    tile_pos = tile[0], tile[1]
-    tile_size = (tile[2], tile[3])
+def draw_tile(tile: list, tile_rendering_pos: tuple, alpha: int = 255):
     tile_image = tile[4]
-
-    tile_rendering_pos = (
-        tile_pos[0] - camera_x + RENDER_WIDTH / 2 + vfx.CAM_SHAKE_OFFSET[0] - vfx.CAM_OFFSET[0],
-        tile_pos[1] - camera_y + RENDER_HEIGHT / 2 + vfx.CAM_SHAKE_OFFSET[1] - vfx.CAM_OFFSET[1]
-    )
 
     tile_image.set_alpha(alpha)
 

@@ -1,4 +1,13 @@
+# aiTilesHandler.py - Handle AI map.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import bullet_mania.config.gameConfig as config
+
 import bullet_mania.data.world as world
 
 AI_TILES_GRID: list = []

@@ -1,3 +1,13 @@
+# aiManager.py - Handle bots, bot updating and bots state machine.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
+############################################################################
+
 # bot structure
 
 # [

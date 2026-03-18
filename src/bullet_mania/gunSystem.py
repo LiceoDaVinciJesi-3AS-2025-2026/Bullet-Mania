@@ -1,6 +1,17 @@
-import pygame
+# gunSystem.py - Gun functions player-related.
+
+# Handle shooting, reloading and drawing player gun, bullets and bullets holes.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 import math
 import random
+
+import pygame
 
 from bullet_mania.config.gameConfig import RENDER_SIZE, CHARACTER_SIZE
 from bullet_mania.data import assets

@@ -1,3 +1,11 @@
+# tilesManager.py - Handle tiles loading, map loading and tiles rendering.
+
+# License: See LICENSE file in the project root for details.
+
+# Authors: 
+# Lorenzo Morresi <lorenzomorresi11@gmail.com>
+# Lucio M. Tagliabracci <lucio.tagliabracci@gmail.com>
+
 POSITION = [0.0, 0.0]
 VELOCITY = [0.0, 0.0]
 

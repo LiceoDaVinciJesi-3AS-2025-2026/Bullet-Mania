@@ -8,8 +8,9 @@ pygame.mixer.init()
 
 from bullet_mania.config.gameConfig import *
 
-from bullet_mania.assetsManager import load_asset
+from bullet_mania.resourcesHandler import *
 
+from bullet_mania.assetsManager import load_asset
 from bullet_mania.uiManager import *
 from bullet_mania.gunSystem import *
 from bullet_mania.tilesManager import *
@@ -118,24 +119,24 @@ def run():
     if len(world.TILES) > 1:
         FIRST_LAYER_ENABLED = True
 
-    load_asset("bullet", "src/bullet_mania/assets/sprites/bullet.png", (8, 8))
-    load_asset("cursor", "src/bullet_mania/assets/ui/cursor.png", (11, 11))
-    load_asset("heart", "src/bullet_mania/assets/ui/heart.png", (16, 16))
-    load_asset("bullet_hole", "src/bullet_mania/assets/vfx/bullet_hole.png", (12, 12))
-    load_asset("ammo", "src/bullet_mania/assets/ui/ammo.png", (6, 6))
-    load_asset("deagle", "src/bullet_mania/assets/guns/deagle.png", (20, 20))
-    load_asset("vignette", "src/bullet_mania/assets/vfx/vignette.png", RENDER_SIZE)
-    load_asset("shadow", "src/bullet_mania/assets/sprites/shadow.png", (16, 16))
+    load_asset("bullet", get_sprite("bullet.png"), (8, 8))
+    load_asset("cursor", get_ui("cursor.png"), (11, 11))
+    load_asset("heart", get_ui("heart.png"), (16, 16))
+    load_asset("bullet_hole", get_vfx("bullet_hole.png"), (12, 12))
+    load_asset("ammo", get_ui("ammo.png"), (6, 6))
+    load_asset("deagle", get_gun("deagle.png"), (20, 20))
+    load_asset("vignette", get_vfx("vignette.png"), RENDER_SIZE)
+    load_asset("shadow", get_sprite("shadow.png"), (16, 16))
 
     assets.ASSETS["shadow"].set_alpha(100)
 
-    load_asset("reloading_progress_bar", "src/bullet_mania/assets/ui/reloading_progress_bar.png", (32, 32))
-    load_asset("reloading_progress_tick", "src/bullet_mania/assets/ui/reloading_progress_tick.png", (5, 5))
+    load_asset("reloading_progress_bar", get_ui("reloading_progress_bar.png"), (32, 32))
+    load_asset("reloading_progress_tick", get_ui("reloading_progress_tick.png"), (5, 5))
 
-    load_spritesheet("player_idle", pygame.image.load("src/bullet_mania/assets/sprites/animations/idle.png"), 24, 24, 0, 4)
-    load_spritesheet("player_walk", pygame.image.load("src/bullet_mania/assets/sprites/animations/run.png"), 24, 24, 0, 4)
-    load_spritesheet("player_dash", pygame.image.load("src/bullet_mania/assets/sprites/animations/dash.png"), 24, 24, 0, 4)
-    
+    load_spritesheet("player_idle", pygame.image.load(get_sprite("animations/idle.png")), 24, 24, 0, 4)
+    load_spritesheet("player_walk", pygame.image.load(get_sprite("animations/walk.png")), 24, 24, 0, 4)
+    load_spritesheet("player_dash", pygame.image.load(get_sprite("animations/dash.png")), 24, 24, 0, 4)
+
     if "player_walk" in assets.SPRITES_ANIMATIONS:
         register_animation("player_walk", assets.SPRITES_ANIMATIONS["player_walk"], 100, loop=True)
         play_animation("player_walk")

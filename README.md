@@ -41,9 +41,10 @@ The game runs on various optimizations, such as:
 
 ## Credits
 
-- Tiles, sprites and UIs made by [@Morress](https://github.com/Morress) through Piskel and Blender,
-- Gun System, Bots and Tiles code made by [@ItzLucio](https://github.com/ItzLucio),
-- Waves code made by [@Morress](https://github.com/Morress)
+- Tiles, sprites and UIs made by [@Morress](https://github.com/Morress) through Piskel and Blender
+- Gun System, Bots, Ui and Tiles code made by [@ItzLucio](https://github.com/ItzLucio)
+- Waves, Animations and Stats code made by [@Morress](https://github.com/Morress)
+- Core part code made by [@ItzLucio](https://github.com/ItzLucio) and [@Morress](https://github.com/Morress)
 
 
 ## Authors

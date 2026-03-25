@@ -39,6 +39,13 @@ The game runs on various optimizations, such as:
 - Data Oriented Design (objects data preferred over classes),
 - Batch Rendering (draw entities all at once through `surface.blits`)
 
+## Credits
+
+- Tiles, sprites and UIs made by [@Morress](https://github.com/Morress) through Piskel and Blender,
+- Gun System, Bots and Tiles code made by [@ItzLucio](https://github.com/ItzLucio),
+- Waves code made by [@Morress](https://github.com/Morress)
+
+
 ## Authors
 
 - [@Morress](https://github.com/Morress)

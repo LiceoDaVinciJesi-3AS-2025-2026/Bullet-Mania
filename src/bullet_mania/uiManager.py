@@ -10,6 +10,8 @@ import pygame
 
 from bullet_mania.config.gameConfig import WINDOW_SIZE, RENDER_SIZE, CHARACTER_SIZE
 
+from bullet_mania.resourcesHandler import *
+
 import bullet_mania.data.assets as assets
 import bullet_mania.data.vfx as vfx
 import bullet_mania.data.player as player
@@ -21,11 +23,11 @@ PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 
 scale = WINDOW_SIZE[0] / RENDER_SIZE[0]
 
-TitleFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 55)
-BodyFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 35)
+TitleFont = pygame.font.Font(get_font("GNF.ttf"), 55)
+BodyFont = pygame.font.Font(get_font("GNF.ttf"), 35)
 
-TextFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 25)
-NumberFont = pygame.font.Font("src/bullet_mania/assets/fonts/GNF.ttf", 35)
+TextFont = pygame.font.Font(get_font("GNF.ttf"), 25)
+NumberFont = pygame.font.Font(get_font("GNF.ttf"), 35)
 
 title = TitleFont.render("BULLET MANIA", True, "white")
 title_rect = pygame.Rect((WINDOW_WIDTH - title.get_width())//2, (WINDOW_HEIGHT//5 - title.get_height()), title.get_width(), title.get_height())

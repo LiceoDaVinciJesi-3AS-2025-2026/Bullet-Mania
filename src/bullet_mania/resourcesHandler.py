@@ -3,7 +3,10 @@ from pathlib import Path
 
 # eventualmente aggiungere tutte le funzioni relative alle cartelle che avete creato in src.
 def get_sound(filename: str) -> Path:
-    return files(__package__) / "assets" / "sounds" / filename
+    return files(__package__) / "assets" / "sounds" / "sfx" / filename
+
+def get_music(filename: str) -> Path:
+    return files(__package__) / "assets" / "sounds" / "music" / filename
 
 def get_font(filename: str) -> Path:
     return files(__package__) / "assets" / "fonts" / filename

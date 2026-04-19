@@ -68,7 +68,7 @@ def run():
 
     pygame.mixer.set_num_channels(32)
 
-    pygame.mixer.music.load("src/bullet_mania/assets/sounds/music/Gungeon_up_Gungeon_Down.mp3")
+    pygame.mixer.music.load(get_music("Gungeon_up_Gungeon_Down.mp3"))
     pygame.mixer.music.set_volume(0.25)
     pygame.mixer.music.play(loops=-1)
 

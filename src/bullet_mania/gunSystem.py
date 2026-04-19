@@ -13,6 +13,8 @@ import random
 
 import pygame
 
+from bullet_mania.resourcesHandler import get_sound
+
 from bullet_mania.config.gameConfig import RENDER_SIZE, CHARACTER_SIZE
 from bullet_mania.data import assets
 
@@ -25,13 +27,13 @@ import bullet_mania.data.vfx as vfx
 PLAYER_WIDTH, PLAYER_HEIGHT = CHARACTER_SIZE
 RENDER_WIDTH, RENDER_HEIGHT = RENDER_SIZE
 
-shoot_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_shoot.mp3")
+shoot_sound = pygame.mixer.Sound(get_sound("gun_shoot.mp3"))
 shoot_sound.set_volume(0.12)
 
-shell_falling_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_shell_falling.mp3")
+shell_falling_sound = pygame.mixer.Sound(get_sound("gun_shell_falling.mp3"))
 shell_falling_sound.set_volume(0.07)
 
-reload_sound = pygame.mixer.Sound("src/bullet_mania/assets/sounds/sfx/gun_reload.mp3")
+reload_sound = pygame.mixer.Sound(get_sound("gun_reload.mp3"))
 reload_sound.set_volume(0.15)
 
 current_bullet_hole_image = None
